@@ -12,6 +12,7 @@ class Strategy():
     __metaclass__ = ABCMeta
 
     interval = INTERVAL_ONE_HOUR
+    strategy_data = {}
 
     _name = 'Base Strategy'
     _portfolio = {
@@ -52,27 +53,31 @@ class Strategy():
 
     @abstractmethod
     def calc_amount_to_buy(self):
-        return NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def calc_amount_to_sell(self):
-        return NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def allocate_tradeable_amount(self):
-        return NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def make_decision(self, data):
-        return NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def analyze_data(self, data):
-        return NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def update_portfolio(self, data):
-        return NotImplementedError
+        raise NotImplementedError
+
+    @abstractmethod
+    def make_sell_order(self):
+        raise NotImplementedError
 
     @property
     def logger(self):
