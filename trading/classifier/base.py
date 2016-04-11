@@ -9,16 +9,16 @@ class Classifier:
 
     @abstractmethod
     def load_serialized_classifier(self, serialized_classifier):
-        return NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def serialize_classifier(self):
-        return NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def prepare_prediction_data(self, data):
-        return NotImplementedError
+        raise NotImplementedError
 
     @abstractmethod
     def prepare_training_data(self, data):
-        return NotImplementedError
+        raise NotImplementedError

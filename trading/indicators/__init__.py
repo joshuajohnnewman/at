@@ -4,6 +4,11 @@ import scipy
 
 TRADING_PERIOD_MONTH = 22
 
+INTERVAL_NINETY_DAYS = 90 # Long Interval
+INTERVAL_FORTY_DAYS = 40 # Medium Interval
+INTERVAL_TEN_DAYS = 10 # Short Interval
+
+
 
 def get_period_high(daily_highs, days=1):
     """

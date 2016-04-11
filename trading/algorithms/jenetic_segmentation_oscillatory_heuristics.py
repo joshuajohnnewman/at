@@ -1,3 +1,6 @@
+from trading.indicators.standard_deviation import calc_std
+from trading.indicators.moving_average import import calc_ma
+from trading.indicators import INTERVAL_FORTY_DAYS
 from trading.algorithms import ORDER_BUY, ORDER_SELL, ORDER_STAY
 from trading.algorithms.base import Strategy
 
@@ -46,12 +49,12 @@ class Josh(Strategy):
             order = self.make_buy_oder()
 
         # Look at mean reversion
-        if closing_price < lower_bound_ma and not self.invested and candle_exit == ORDER_BUY:
+        if closing_price < lower_bound_ma and (not self.invested and candle_exit == ORDER_BUY):
             # The price has dropped below the lower BB, so buy
             order_decision = ORDER_BUY
             order = self.make_buy_order()
 
-        elif closing_price > upper_bound_ma and self.invested and candle_exit == ORDER_SELL:
+        elif closing_price > upper_bound_ma and (self.invested and candle_exit == ORDER_SELL):
             # The price has risen above the upper BB, so sell
             order_decision = ORDER_SELL
             order = self.make_sell_order()
@@ -59,7 +62,16 @@ class Josh(Strategy):
         return order_decision, order
 
     def analyze_data(self, data):
-        pass
+        # Get the standard deviation from the moving average
+        std = calc_std(data['price'], INTERVAL_FORTY_DAYS)
+
+        # Construct the upper and lower Bollinger Bands
+        ma = calc_ma(data['price'], INTERVAL_FORTY_DAYS)
+        upper = ma + (Decimal(2) * std)
+        lower = ma - (Decimal(2) * std)
+
+        price = data[primary_pair].close
+        long_exit, short_exit = calc_chandalier_exits()
 
     def make_buy_order(self):
         return {}
