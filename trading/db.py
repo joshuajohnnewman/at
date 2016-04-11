@@ -20,12 +20,6 @@ def get_database(read_preference=ReadPreference.SECONDARY_PREFERRED):
 
 
 def transform_son(son):
-    """
-    Recursively converts Mongo ObjectId fields to strings to allow json serialization
-    Also renames the _id keys to id
-    :param son: the SON (Serialized Ocument Notation) object to be modified
-    :return: son object with specified fields modified to be strings
-    """
     for field in son:
         if isinstance(son[field], dict):
             transform_son(son[field])

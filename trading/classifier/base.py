@@ -1,18 +1,18 @@
 from abc import abstractmethod, ABCMeta
 
 
-class Classifier():
+class Classifier:
     __metaclass__ = ABCMeta
 
     def passes_filter(self, datum):
         return True
 
     @abstractmethod
-    def load_pkl_classifier(self, pkl_classifier):
+    def load_serialized_classifier(self, serialized_classifier):
         return NotImplementedError
 
     @abstractmethod
-    def pkl_classifier(self):
+    def serialize_classifier(self):
         return NotImplementedError
 
     @abstractmethod
