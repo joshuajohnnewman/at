@@ -1,6 +1,11 @@
+import datetime
+
+from decimal import Decimal
+
+from trading.broker import MarketOrder, SIDE_BUY, SIDE_SELL
 from trading.indicators.standard_deviation import calc_std
-from trading.indicators.moving_average import import calc_ma
-from trading.indicators import INTERVAL_FORTY_DAYS
+from trading.indicators.moving_average import calc_ma
+from trading.indicators import INTERVAL_FORTY_DAYS, calc_chandalier_exits
 from trading.algorithms import ORDER_BUY, ORDER_SELL, ORDER_STAY
 from trading.algorithms.base import Strategy
 
@@ -9,8 +14,8 @@ class Josh(Strategy):
 
     _tradeable_currency = None
 
-    def __init__(self, primary_pair, ):
-        super(Josh).__init__(primary_pair)
+    def __init__(self, primary_pair, starting_currency, instrument):
+        super(Josh).__init__(primary_pair, starting_currency, instrument)
 
     def calc_amount_to_buy(self):
         pass
@@ -30,7 +35,6 @@ class Josh(Strategy):
         short_candle_exit = self.strategy_data['short_candle_exit']
         lower_bound_ma = self.strategy_data['lower_bound_ma']
         upper_bound_ma = self.strategy_data['upper_bound_ma']
-
 
         candle_exit = self._check_candle_exits(closing_price, long_candle_exit, short_candle_exit)
 
@@ -70,14 +74,34 @@ class Josh(Strategy):
         upper = ma + (Decimal(2) * std)
         lower = ma - (Decimal(2) * std)
 
-        price = data[primary_pair].close
+        price = data['closing_price']
         long_exit, short_exit = calc_chandalier_exits()
 
     def make_buy_order(self):
-        return {}
+        trade_expire = datetime.utcnow() + datetime.timedelta(days=1)
+        trade_expire = trade_expire.isoformat("T") + "Z"
+
+        instrument = self.instrument
+        units = self.calc_amount_to_buy()
+        side = SIDE_BUY
+        order_type = ''
+        price = ''
+        expiry = trade_expire
+
+        return MarketOrder(instrument, units, side, order_type, price, expiry)
 
     def make_sell_order(self):
-        return {}
+        trade_expire = datetime.utcnow() + datetime.timedelta(days=1)
+        trade_expire = trade_expire.isoformat("T") + "Z"
+
+        instrument = self.instrument
+        units = self.calc_amount_to_sell()
+        side = SIDE_SELL
+        order_type = ''
+        price = ''
+        expiry = trade_expire
+
+        return MarketOrder(instrument, units, side, order_type, price, expiry)
 
     def _check_candle_exits(self, closing_price, long_candle_exit, short_candle_exit):
         if closing_price < long_candle_exit:
