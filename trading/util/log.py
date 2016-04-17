@@ -1,14 +1,27 @@
+import sys, traceback
+
+
 class Logger:
-    logging_message = '[{level}], message: {message} data: {data}'
+    logging_message = '[{level}] message: {message} data: {data}'
+    logging_message_no_data = '[{level}] message: {message}'
 
-    def info(self, message, data):
+    def info(self, message, data=''):
         log_level = 'INFO'
-        print(self.logging_message.format(level=log_level, message=message, data=data))
+        if data is not '':
+            print(self.logging_message.format(level=log_level, message=message, data=data))
+        else:
+            print(self.logging_message_no_data.format(level=log_level, message=message))
 
-    def error(self, message, data):
+    def error(self, message, data=''):
         log_level = 'ERROR'
-        print(self.logging_message.format(level=log_level, message=message, data=data))
 
-    def debug(self, message, data):
-        log_level = 'DEBUG'
         print(self.logging_message.format(level=log_level, message=message, data=data))
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback, limit=2, file=sys.stdout)
+
+    def debug(self, message, data=''):
+        log_level = 'DEBUG'
+        if data is not '':
+            print(self.logging_message.format(level=log_level, message=message, data=data))
+        else:
+            print(self.logging_message_no_data.format(level=log_level, message=message))

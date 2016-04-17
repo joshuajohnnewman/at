@@ -2,111 +2,121 @@ import datetime
 
 from decimal import Decimal
 
-from trading.broker import MarketOrder, SIDE_BUY, SIDE_SELL
-from trading.indicators.standard_deviation import calc_std
-from trading.indicators.moving_average import calc_ma
-from trading.indicators import INTERVAL_FORTY_DAYS, calc_chandalier_exits
-from trading.algorithms import ORDER_BUY, ORDER_SELL, ORDER_STAY
 from trading.algorithms.base import Strategy
+from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY
+from trading.data.transformations import normalize_price_data
+from trading.indicators.talib_indicators import calc_std, calc_ma
+from trading.indicators import INTERVAL_FORTY_DAYS, calc_chandalier_exits
 
 
 class Josh(Strategy):
+    name = 'Josh'
 
-    _tradeable_currency = None
+    long_exit_sensitivity = 10
+    short_exit_sensitivity = 5
 
-    def __init__(self, primary_pair, starting_currency, instrument):
-        super(Josh).__init__(primary_pair, starting_currency, instrument)
+    def __init__(self, instrument, pair_a, pair_b):
+        super(Josh, self).__init__(instrument, pair_a, pair_b)
+        self.invested = False
 
-    def calc_amount_to_buy(self):
-        pass
+    def calc_amount_to_buy(self, current_price):
+        pair_a_tradeable = self.portfolio.pair_a['tradeable_currency']
+        return pair_a_tradeable / current_price
 
-    def calc_amount_to_sell(self):
-        pass
+    def calc_amount_to_sell(self, current_price):
+        pair_b_tradeable = self.portfolio.pair_b['tradeable_curency']
+        return pair_b_tradeable
 
     def allocate_tradeable_amount(self):
-        pass
+        pair_a = self.portfolio.pair_a
+        profit = self.portfolio.profit
 
-    def make_decision(self, data):
-        LONG_EXIT_SENSITIVITY = 10
-        SHORT_EXIT_SENSITIVITY = 5
+        if profit > 0:
+            pair_a['tradeable_currency'] = pair_a['initial_currency']
 
-        closing_price = self.strategy_data['closing_price']
+    def analyze_data(self, current_data, historical_data):
+        current_data = current_data['prices']
+        historical_data = historical_data['candles']
+        closing_historical_data = normalize_price_data(historical_data, 'closeAsk')
+        high_historical_data = normalize_price_data(historical_data, 'highAsk')
+        low_historical_data = normalize_price_data(historical_data, 'lowAsk')
+
+        current_price_data = normalize_price_data(current_data, 'ask')
+
+        std = Decimal(calc_std(closing_historical_data, min(INTERVAL_FORTY_DAYS, len(historical_data))))
+
+        # Construct the upper and lower Bollinger Bands
+        ma = Decimal(calc_ma(closing_historical_data, min(INTERVAL_FORTY_DAYS, len(historical_data))))
+        upper = ma + (Decimal(2) * std)
+        lower = ma - (Decimal(2) * std)
+
+        long_exit, short_exit = calc_chandalier_exits(closing_historical_data, high_historical_data, low_historical_data)
+
+        self.strategy_data['asking_price'] = current_price_data[0]
+        self.strategy_data['long_candle_exit'] = long_exit
+        self.strategy_data['short_candle_exit'] = short_exit
+        self.strategy_data['lower_bound_ma'] = lower
+        self.strategy_data['upper_bound_ma'] = upper
+
+        self.log_strategy_data()
+
+    def make_decision(self):
+        asking_price = self.strategy_data['asking_price']
         long_candle_exit = self.strategy_data['long_candle_exit']
         short_candle_exit = self.strategy_data['short_candle_exit']
         lower_bound_ma = self.strategy_data['lower_bound_ma']
         upper_bound_ma = self.strategy_data['upper_bound_ma']
 
-        candle_exit = self._check_candle_exits(closing_price, long_candle_exit, short_candle_exit)
+        candle_exit = self._check_candle_exits(asking_price, long_candle_exit, short_candle_exit)
 
-        order_decision = ORDER_STAY
+        order_decision = SIDE_STAY
         order = None
 
         if candle_exit is not None:
             self.logger.info('Candle exit decision {dec}'.format(dec=candle_exit))
 
-        if closing_price < (long_candle_exit - LONG_EXIT_SENSITIVITY):
-            order_decision = ORDER_SELL
-            order = self.make_sell_order()
+        if asking_price < (long_candle_exit - self.long_exit_sensitivity):
+            order_decision = SIDE_SELL
+            order = self.make_order(asking_price, order_side=order_decision)
 
-        if closing_price > (short_candle_exit + SHORT_EXIT_SENSITIVITY):
-            order_decision = ORDER_BUY
-            order = self.make_buy_oder()
+        if asking_price > (short_candle_exit + self.short_exit_sensitivity):
+            order_decision = SIDE_BUY
+            order = self.make_order(asking_price, order_side=order_decision)
 
         # Look at mean reversion
-        if closing_price < lower_bound_ma and (not self.invested and candle_exit == ORDER_BUY):
-            # The price has dropped below the lower BB, so buy
-            order_decision = ORDER_BUY
-            order = self.make_buy_order()
+        if asking_price < lower_bound_ma and (not self.invested and candle_exit == SIDE_BUY):
+            # The price has dropped below the lower BB: Buy
+            order_decision = SIDE_BUY
+            order = self.make_order(asking_price, order_side=order_decision)
 
-        elif closing_price > upper_bound_ma and (self.invested and candle_exit == ORDER_SELL):
-            # The price has risen above the upper BB, so sell
-            order_decision = ORDER_SELL
-            order = self.make_sell_order()
+        elif asking_price > upper_bound_ma and (self.invested and candle_exit == SIDE_SELL):
+            # The price has risen above the upper BB: Sell
+            order_decision = SIDE_SELL
+            order = self.make_order(asking_price, order_side=order_decision)
 
         return order_decision, order
 
-    def analyze_data(self, data):
-        # Get the standard deviation from the moving average
-        std = calc_std(data['price'], INTERVAL_FORTY_DAYS)
-
-        # Construct the upper and lower Bollinger Bands
-        ma = calc_ma(data['price'], INTERVAL_FORTY_DAYS)
-        upper = ma + (Decimal(2) * std)
-        lower = ma - (Decimal(2) * std)
-
-        price = data['closing_price']
-        long_exit, short_exit = calc_chandalier_exits()
-
-    def make_buy_order(self):
-        trade_expire = datetime.utcnow() + datetime.timedelta(days=1)
+    def make_order(self, asking_price, order_side=SIDE_BUY):
+        trade_expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)
         trade_expire = trade_expire.isoformat("T") + "Z"
 
-        instrument = self.instrument
-        units = self.calc_amount_to_buy()
-        side = SIDE_BUY
-        order_type = ''
-        price = ''
-        expiry = trade_expire
-
-        return MarketOrder(instrument, units, side, order_type, price, expiry)
-
-    def make_sell_order(self):
-        trade_expire = datetime.utcnow() + datetime.timedelta(days=1)
-        trade_expire = trade_expire.isoformat("T") + "Z"
-
-        instrument = self.instrument
-        units = self.calc_amount_to_sell()
-        side = SIDE_SELL
-        order_type = ''
-        price = ''
-        expiry = trade_expire
-
-        return MarketOrder(instrument, units, side, order_type, price, expiry)
-
-    def _check_candle_exits(self, closing_price, long_candle_exit, short_candle_exit):
-        if closing_price < long_candle_exit:
-            return ORDER_SELL
-        elif closing_price > short_candle_exit:
-            return ORDER_BUY
+        if order_side == SIDE_BUY:
+            units = self.calc_amount_to_buy(asking_price)
         else:
-            return ORDER_STAY
+            units = self.calc_amount_to_sell(asking_price)
+
+        instrument = self.portfolio.instrument
+        side = order_side
+        order_type = ORDER_MARKET
+        price = asking_price
+        expiry = trade_expire
+
+        return MarketOrder(instrument, units, side, order_type, price, expiry)
+
+    def _check_candle_exits(self, asking_price, long_candle_exit, short_candle_exit):
+        if asking_price < long_candle_exit:
+            return SIDE_SELL
+        elif asking_price > short_candle_exit:
+            return SIDE_BUY
+        else:
+            return SIDE_STAY

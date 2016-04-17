@@ -1,39 +1,41 @@
 import time
 
+from trading.algorithms import ORDER_STAY
 from trading.util.log import Logger
 
 
 class LiveTradingStrategy:
-    strategy = None
-    broker = None
-
-    _instrument = None
-    _interval = None
     _logger = None
 
     def __init__(self, strategy, broker):
+        self.ticks = 0
         self.strategy = strategy
-        self._interval = strategy.interval
-        self._instrument = strategy.instrument
+        self.interval = strategy.interval
+        self.instrument = strategy.instrument
 
         self.broker = broker
 
     def tick(self):
         try:
-            data = self.broker.get_price_data(self._instrument)
-            self.strategy.analyze_data(data)
-            market_order = self.strategy.make_decision()
+            self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
 
-            if market_order:
+            current_data = self.broker.get_current_price_data(self.instrument)
+            past_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
+            self.strategy.analyze_data(current_data, past_data)
+            order_decision, market_order = self.strategy.make_decision()
+
+            if order_decision is not ORDER_STAY:
                 order_response = self.broker.make_order(market_order)
                 self.strategy.update_portfolio(order_response)
 
-            time.sleep(self._interval)
+            time.sleep(self.interval)
+            self.ticks += 1
             self.tick()
 
         # Todo make custom exceptions
         except Exception as e:
             self.logger.error('Live Trading Error', data=e)
+            self.strategy.shutdown()
 
     @property
     def logger(self):

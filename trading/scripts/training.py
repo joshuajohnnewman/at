@@ -1,19 +1,16 @@
-from argparse import ArgumentParser
-
-from trading.data.load_local_data import load_json
+import json
 
 
-def main(data_file, classifier_id=None, strategy=None):
-    data = load_json(data_file)
+
+def get_training_data(broker, instrument, count, granularity):
+    broker_response = broker.get_historical_price_data(instrument, count=count, granularity=granularity)
+    return broker_response
 
 
-if __name__ == '__main__':
-    parser = ArgumentParser()
+def transform_training_data(data):
+    pass
 
-    parser.add_argument('data_file', help='name of data file')
-    parser.add_argument('--classifier_id', help='id of classifier')
-    parser.add_argument('--strategy', help='id of trading strategies')
-
-    args = parser.parse_args()
-
-    main(args.data_file, args.classifier_id, args.strategy)
+def get_local_data(file):
+    with open(file) as f:
+        data = json.load(f)
+    return data

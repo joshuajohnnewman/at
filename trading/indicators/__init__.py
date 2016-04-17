@@ -1,13 +1,12 @@
-import talib
 import scipy
 
+from trading.indicators.talib_indicators import calc_atr
 
 TRADING_PERIOD_MONTH = 22
 
 INTERVAL_NINETY_DAYS = 90 # Long Interval
 INTERVAL_FORTY_DAYS = 40 # Medium Interval
 INTERVAL_TEN_DAYS = 10 # Short Interval
-
 
 
 def get_period_high(daily_highs, days=1):
@@ -30,15 +29,20 @@ def get_period_low(daily_lows, days=1):
     return min(target_range)
 
 
-def calc_chandalier_exits(data, volatility_threshold=3, trading_period=TRADING_PERIOD_MONTH):
+def calc_chandalier_exits(closing_data, high_data, low_data, volatility_threshold=3,
+                          trading_period=TRADING_PERIOD_MONTH):
     """
     Volatility-based system that identifies outsized price movements
     Indicator provides a buffer that is three times the volatility
     A decline strong enough to break this level warrants a reevaluation of long positions
     """
-    month_high = get_period_high(data, trading_period)
-    month_low = get_period_low(data, trading_period)
-    return 2, 2
+    month_high = get_period_high(closing_data, trading_period)
+    month_low = get_period_low(closing_data, trading_period)
+    atr = calc_atr(closing_data, high_data, low_data, trading_period)
+    long_exit = month_high - (atr * volatility_threshold)
+    short_exit = month_low + (atr * volatility_threshold)
+
+    return long_exit, short_exit
 
 
 def moving_average(data, period):

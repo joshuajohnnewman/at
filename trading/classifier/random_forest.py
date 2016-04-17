@@ -34,6 +34,12 @@ class RFClassifier(Classifier):
     def remove_training_data(self):
         pass
 
+    def load_serialized_classifier(self, serialized_classifier):
+        pass
+
+    def serialize_classifier(self):
+        pass
+
     @property
     def classifier(self):
         if self._classifier is None:

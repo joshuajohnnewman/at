@@ -20,7 +20,6 @@ class LiveStrategies(Resource):
         db = get_database()
         strategy = db.live_strategies.findOne({'_id': ObjectId(live_strategy_id)})
 
-
         live_strategy = initialize_live_strategy(db, strategy)
 
         live_strategy.tick()

@@ -1,18 +1,28 @@
 import os
 
+from oandapy.oandapy import EndpointsMixin
+
 from trading.broker.base import Broker
+from trading.broker.oanda_constants import GRANULARITY_DAY, COUNT_FORTY
 
 
-class OandaBroker(Broker):
+class OandaBroker(Broker, EndpointsMixin):
 
     _account_id = None
     _oanda = None
 
-    def __init__(self):
-        self.account_id = os.environ['OANDA_ACCOUNT_ID']
+    def get_current_price_data(self, instrument):
+        if not isinstance(instrument, list):
+            instrument = [instrument]
+        broker_response = self.oanda.get_prices(instruments=instrument)
+        return broker_response
+
+    def get_historical_price_data(self, instrument, count=COUNT_FORTY, granularity=GRANULARITY_DAY):
+        broker_response = self.oanda.get_history(instrument=instrument, count=count, granularity=granularity)
+        return broker_response
 
     def make_order(self, order):
-        order_confirmation = self._oanda.create_order(self.account_id,
+        order_confirmation = self.oanda.create_order(self.account_id,
                                                  instrument=order.instrument,
                                                  units=order.units,
                                                  side=order.side,
@@ -23,9 +33,9 @@ class OandaBroker(Broker):
 
         return order_confirmation
 
-    def get_price_data(self, instrument):
-        broker_response = self._oanda.get_prices(instruments=instrument)
-        return broker_response
+    @property
+    def account_id(self):
+        return os.environ['OANDA_ACCOUNT_ID']
 
     @property
     def oanda(self):
