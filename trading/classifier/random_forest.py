@@ -28,10 +28,10 @@ class RFClassifier(Classifier):
         X, y = self.prepare_training_data()
         self.classifier.fit(X,y)
 
-    def generate_training_data(self, num_periods):
+    def prepare_training_data(self, data):
         pass
 
-    def remove_training_data(self):
+    def prepare_prediction_data(self, X):
         pass
 
     def load_serialized_classifier(self, serialized_classifier):
