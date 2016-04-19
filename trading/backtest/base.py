@@ -1,46 +1,37 @@
+import time
+
 from trading.algorithms import ORDER_STAY
+from trading.backtest import get_historical_data
 from trading.util.log import Logger
 
 
-class TrainingStrategy:
+class BackTestStrategy:
     _logger = None
-    data = {}
 
-    def __init__(self, strategy, broker, instrument, granularity, period_count):
+    def __init__(self, strategy, period_count, backtest_file, granularity):
         self.ticks = 0
         self.strategy = strategy
         self.interval = strategy.interval
         self.instrument = strategy.instrument
         self.period_count = period_count
 
-        self.broker = broker
-        historical_data = self.broker.get_historical_price_data(instrument, (period_count + self.strategy.data_window), granularity)
+        historical_data = get_historical_data(backtest_file)
         self.strategy_data = self.format_data(historical_data)
 
     def tick(self):
-        for period in self.period_count:
-            market_data = self.strategy_data[period:self.strategy_data]
-
             self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
-            self.strategy.analyze_data(market_data)
+
+            current_data = self.broker.get_current_price_data(self.instrument)
+            past_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
+            self.strategy.analyze_data(current_data, past_data)
             order_decision, market_order = self.strategy.make_decision()
 
             if order_decision is not ORDER_STAY:
                 self.strategy.update_portfolio(market_order)
 
-            self.data[period] = {
-               'decision': order_decision,
-               'short_term_ma': self.strategy.strategy_data['short_term_ma'],
-               'long_term_ma': self.strategy.strategy_data['long_term_ma']
-           }
-
             self.ticks += 1
             self.tick()
 
-        return self.strategy_data
-
-    def format_data(self, strategy_data):
-        return strategy_data['candles']
 
     @property
     def logger(self):

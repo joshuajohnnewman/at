@@ -19,10 +19,12 @@ class LiveTradingStrategy:
         try:
             self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
 
-            current_data = self.broker.get_current_price_data(self.instrument)
-            past_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
-            self.strategy.analyze_data(current_data, past_data)
+            market_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
+            self.strategy.analyze_data(market_data)
             order_decision, market_order = self.strategy.make_decision()
+
+            self.logger.info('Strategy Decison {decision} and market order {order}'
+                             .format(decision=order_decision, order=market_order))
 
             if order_decision is not ORDER_STAY:
                 order_response = self.broker.make_order(market_order)

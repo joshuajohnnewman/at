@@ -1,3 +1,4 @@
+import numpy
 import pickle as pkl
 
 from sklearn import ensemble
@@ -24,21 +25,35 @@ class RFClassifier(Classifier):
 
         return prediction
 
-    def train(self):
-        X, y = self.prepare_training_data()
+    def train(self, X, y):
         self.classifier.fit(X,y)
 
-    def prepare_training_data(self, data):
-        pass
+    def prepare_training_data(self, strategy_data):
+        X = []
+        y = []
 
-    def prepare_prediction_data(self, X):
-        pass
+        for feature in strategy_data:
+            feature_data = numpy.asarray(strategy_data[feature])
+            if feature_data == 'decision':
+                y = feature_data
+            else:
+                X.append(feature_data)
+
+        return X, y
+
+    def prepare_prediction_data(self, strategy_data):
+        X = []
+
+        for feature in strategy_data:
+            feature_data = numpy.asarray(strategy_data[feature])
+            X.append(feature_data)
+        return X
 
     def load_serialized_classifier(self, serialized_classifier):
-        pass
+        self._classifier = pkl.loads(serialized_classifier)
 
     def serialize_classifier(self):
-        pass
+        return pkl.dumps(self.classifier)
 
     @property
     def classifier(self):

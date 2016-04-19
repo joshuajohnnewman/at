@@ -34,25 +34,23 @@ class Josh(Strategy):
         if profit > 0:
             pair_a['tradeable_currency'] = pair_a['initial_currency']
 
-    def analyze_data(self, current_data, historical_data):
-        current_data = current_data['prices']
-        historical_data = historical_data['candles']
-        closing_historical_data = normalize_price_data(historical_data, 'closeAsk')
-        high_historical_data = normalize_price_data(historical_data, 'highAsk')
-        low_historical_data = normalize_price_data(historical_data, 'lowAsk')
+    def analyze_data(self, market_data):
 
-        current_price_data = normalize_price_data(current_data, 'ask')
+        market_data = market_data['candles']
+        closing_market_data = normalize_price_data(market_data, 'closeAsk')
+        high_market_data = normalize_price_data(market_data, 'highAsk')
+        low_market_data = normalize_price_data(market_data, 'lowAsk')
 
-        std = Decimal(calc_std(closing_historical_data, min(INTERVAL_FORTY_DAYS, len(historical_data))))
+        std = Decimal(calc_std(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
 
         # Construct the upper and lower Bollinger Bands
-        ma = Decimal(calc_ma(closing_historical_data, min(INTERVAL_FORTY_DAYS, len(historical_data))))
+        ma = Decimal(calc_ma(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
         upper = ma + (Decimal(2) * std)
         lower = ma - (Decimal(2) * std)
 
-        long_exit, short_exit = calc_chandalier_exits(closing_historical_data, high_historical_data, low_historical_data)
+        long_exit, short_exit = calc_chandalier_exits(closing_market_data, high_market_data, low_market_data)
 
-        self.strategy_data['asking_price'] = current_price_data[0]
+        self.strategy_data['asking_price'] = closing_market_data[0]
         self.strategy_data['long_candle_exit'] = long_exit
         self.strategy_data['short_candle_exit'] = short_exit
         self.strategy_data['lower_bound_ma'] = lower

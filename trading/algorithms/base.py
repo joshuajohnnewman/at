@@ -24,7 +24,7 @@ class Strategy(object):
         self.data_window = INTERVAL_FORTY_DAYS
 
     @abstractmethod
-    def analyze_data(self, current_data, historical_data):
+    def analyze_data(self, market_data):
         raise NotImplementedError
 
     @abstractmethod
