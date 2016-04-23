@@ -12,7 +12,12 @@ def main():
 
     instrument = INSTRUMENT_EUR_USD
 
-    josh_strategy = Josh(instrument, pair_a, pair_b)
+    config = {
+        'instrument': instrument,
+        'pair_a': pair_a,
+        'pair_b': pair_b
+    }
+    josh_strategy = Josh({}, '571bb64b16890190cbd86a54')
 
     strategy = LiveTradingStrategy(josh_strategy, broker)
     strategy.tick()

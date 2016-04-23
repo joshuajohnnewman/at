@@ -16,7 +16,7 @@ def create_ds_mongo_client(read_preference):
 
 def get_database(read_preference=ReadPreference.SECONDARY_PREFERRED):
     mongo = create_ds_mongo_client(read_preference=read_preference)
-    return mongo.model_gym
+    return mongo.trading
 
 
 def transform_son(son):

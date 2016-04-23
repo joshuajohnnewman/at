@@ -18,12 +18,15 @@ class TrainingStrategy:
         self.strategy_data = self.format_data(historical_data)
 
     def tick(self):
-        for period in self.period_count:
-            market_data = self.strategy_data[period:self.strategy_data]
+        for period in range(0, self.period_count):
+            market_data = self.strategy_data[period:self.strategy.data_window]
 
             self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
             self.strategy.analyze_data(market_data)
             order_decision, market_order = self.strategy.make_decision()
+
+            self.logger.info('Order decision {decision} and market order {order}'
+                            .format(decision=order_decision, order=market_order))
 
             if order_decision is not ORDER_STAY:
                 self.strategy.update_portfolio(market_order)
@@ -35,9 +38,8 @@ class TrainingStrategy:
            }
 
             self.ticks += 1
-            self.tick()
 
-        return self.strategy_data
+        return self.data
 
     def format_data(self, strategy_data):
         return strategy_data['candles']

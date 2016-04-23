@@ -9,6 +9,8 @@ class LiveTradingStrategy:
 
     def __init__(self, strategy, broker):
         self.ticks = 0
+        self.start_time = time.time()
+
         self.strategy = strategy
         self.interval = strategy.interval
         self.instrument = strategy.instrument
@@ -35,9 +37,18 @@ class LiveTradingStrategy:
             self.tick()
 
         # Todo make custom exceptions
+        except (KeyboardInterrupt, SystemExit) as e:
+            self.logger.error('Manually Stopped Live Trading', data=e)
+            self.shutdown('KEYBOARD INTERRUPT')
         except Exception as e:
             self.logger.error('Live Trading Error', data=e)
-            self.strategy.shutdown()
+            self.shutdown(e)
+
+    def shutdown(self, e):
+        self.end_time = time.time()
+        self.strategy.shutdown(self.start_time, self.end_time, self.ticks, str(e))
+        self.logger.info('Shut down live trading strategy successfully')
+
 
     @property
     def logger(self):

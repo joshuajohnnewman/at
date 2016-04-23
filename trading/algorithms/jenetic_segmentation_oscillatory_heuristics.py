@@ -1,12 +1,13 @@
 import datetime
 
+from bson import ObjectId
 from decimal import Decimal
 
 from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY
 from trading.data.transformations import normalize_price_data
 from trading.indicators.talib_indicators import calc_std, calc_ma
-from trading.indicators import INTERVAL_FORTY_DAYS, calc_chandalier_exits
+from trading.indicators import calc_chandalier_exits, INTERVAL_FORTY_DAYS
 
 
 class Josh(Strategy):
@@ -15,8 +16,14 @@ class Josh(Strategy):
     long_exit_sensitivity = 10
     short_exit_sensitivity = 5
 
-    def __init__(self, instrument, pair_a, pair_b):
-        super(Josh, self).__init__(instrument, pair_a, pair_b)
+    def __init__(self, config, strategy_id):
+        if strategy_id is None:
+            strategy_id = ObjectId()
+        else:
+            config = self.load_strategy(strategy_id)
+
+        super(Josh, self).__init__(config)
+        self.strategy_id = strategy_id
         self.invested = False
 
     def calc_amount_to_buy(self, current_price):
@@ -50,7 +57,7 @@ class Josh(Strategy):
 
         long_exit, short_exit = calc_chandalier_exits(closing_market_data, high_market_data, low_market_data)
 
-        self.strategy_data['asking_price'] = closing_market_data[0]
+        self.strategy_data['asking_price'] = closing_market_data[-1]
         self.strategy_data['long_candle_exit'] = long_exit
         self.strategy_data['short_candle_exit'] = short_exit
         self.strategy_data['lower_bound_ma'] = lower
@@ -111,7 +118,34 @@ class Josh(Strategy):
 
         return MarketOrder(instrument, units, side, order_type, price, expiry)
 
-    def _check_candle_exits(self, asking_price, long_candle_exit, short_candle_exit):
+    def shutdown(self, started_at, ended_at, num_ticks, shutdown_cause):
+        serialized_portfolio = self.portfolio.serialize()
+
+        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, shutdown_cause)
+
+        config = {
+            'instrument': self.portfolio.instrument,
+            'pair_a': self.portfolio.pair_a,
+            'pair_b': self.portfolio.pair_b
+        }
+
+        strategy = {
+            'config': config,
+            'portfolio': serialized_portfolio,
+            'data_window': self.data_window,
+            'interval': self.interval,
+            'indicators': self.strategy_data.keys(),
+            'instrument': self.instrument,
+
+        }
+
+
+        query = {'_id': ObjectId(self.strategy_id)}
+        update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
+        self.db.strategies.update(query, update, upsert=True)
+
+    @staticmethod
+    def _check_candle_exits(asking_price, long_candle_exit, short_candle_exit):
         if asking_price < long_candle_exit:
             return SIDE_SELL
         elif asking_price > short_candle_exit:

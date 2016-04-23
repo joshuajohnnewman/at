@@ -7,6 +7,7 @@ from trading.broker.oanda_constants import GRANULARITY_DAY, COUNT_FORTY
 
 
 class OandaBroker(Broker, EndpointsMixin):
+    name = 'Oanda'
 
     _account_id = None
     _oanda = None

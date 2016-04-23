@@ -1,11 +1,12 @@
 import datetime
 
+from bson import ObjectId
 from decimal import Decimal
 
 from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY
 from trading.data.transformations import normalize_price_data
-from trading.indicators import INTERVAL_TEN_DAYS, INTERVAL_NINETY_DAYS
+from trading.indicators import INTERVAL_TEN_DAYS
 from trading.indicators.talib_indicators import calc_ma
 
 
@@ -31,32 +32,37 @@ class MAC(Strategy):
             pair_a['tradeable_currency'] = pair_a['initial_currency']
 
     def analyze_data(self, market_data):
-        market_data = market_data['candles']
         closing_market_data = normalize_price_data(market_data, 'closeAsk')
 
         # Construct the upper and lower Bollinger Bands
         short_ma = Decimal(calc_ma(closing_market_data, INTERVAL_TEN_DAYS))
-        long_ma = Decimal(calc_ma(closing_market_data, INTERVAL_NINETY_DAYS))
+        long_ma = Decimal(calc_ma(closing_market_data, 20))
 
+        self.strategy_data['asking_price'] = closing_market_data[-1]
         self.strategy_data['short_term_ma'] = short_ma
         self.strategy_data['long_term_ma'] = long_ma
 
     def make_decision(self):
+        asking_price = self.strategy_data['asking_price']
         short_term = self.strategy_data['short_term_ma']
         long_term = self.strategy_data['long_term_ma']
-
-        diff = 100 * (short_term - long_term) / ((short_term + long_term) / 2)
 
         decision = SIDE_STAY
         order = None
 
+        try:
+            diff = 100 * (short_term - long_term) / ((short_term + long_term) / 2)
+        except Exception as e:
+            return decision, order
+
+
         if diff >= self.crossover_threshold and not self.invested:
             decision = SIDE_BUY
-            order = self.make_order(decision)
+            order = self.make_order(asking_price, decision)
 
         elif diff <= - self.crossover_threshold and self.invested:
             decision = SIDE_SELL
-            order = self.make_order(decision)
+            order = self.make_order(asking_price, decision)
 
         return decision, order
 
@@ -76,6 +82,26 @@ class MAC(Strategy):
         expiry = trade_expire
 
         return MarketOrder(instrument, units, side, order_type, price, expiry)
+
+    def shutdown(self, started_at, ended_at, num_ticks, shutdown_cause):
+        serialized_portfolio = self.portfolio.serialize()
+
+        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, shutdown_cause)
+
+        strategy = {
+            'portfolio': serialized_portfolio,
+            'classifier_id': self.classifier.classifier_id,
+            'num_ticks': self.num_ticks,
+            'interval': self.interval,
+            'data_window': self.data_window,
+            'indicators': self.strategy_data.keys(),
+            'instrument': self.instrument
+        }
+
+        query = {'_id': ObjectId(self.id)}
+        update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
+
+        self.db.strategies.update(query, update)
 
     def update_portfolio(self, order_response):
         self.logger.info('Order Response')
