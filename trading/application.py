@@ -6,6 +6,7 @@ from werkzeug.contrib.cache import SimpleCache
 from trading.api import ok
 
 from trading.api.classifiers import Classifiers
+from trading.api.strategies import Strategies
 from trading.trading_auth.auth import authorize
 from trading.util.log import Logger
 
@@ -33,7 +34,7 @@ cors = CORS(application)
 
 api = TradingApi(application, prefix='/api/v1')
 api.add_resource(Classifiers, '/classifiers')
-
+api.add_resource(Strategies, '/strategies')
 
 @application.before_request
 def before_request():

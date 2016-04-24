@@ -9,8 +9,8 @@ def main():
     strategy_id = None
 
     broker = OandaBroker()
-    pair_a =  {'name': 'usd', 'amount': 1000}
-    pair_b = {'name': 'eur', 'amount': 0}
+    pair_a =  {'name': 'usd', 'starting_currency': 1000, 'tradeable_currency': 1000}
+    pair_b = {'name': 'eur', 'starting_currency': 0, 'tradeable_currency': 0}
 
     instrument = INSTRUMENT_EUR_USD
     classifier_config = {'classifier_id': classifier_id}

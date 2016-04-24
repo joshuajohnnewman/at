@@ -41,11 +41,11 @@ class Strategy(object):
         raise NotImplementedError
 
     @abstractmethod
-    def calc_amount_to_buy(self, current_price):
+    def calc_units_to_buy(self, current_price):
         raise NotImplementedError
 
     @abstractmethod
-    def calc_amount_to_sell(self, current_price):
+    def calc_units_to_sell(self, current_price):
         raise NotImplementedError
 
     @abstractmethod
@@ -63,7 +63,10 @@ class Strategy(object):
         self.portfolio.update(order_response)
 
     def log_strategy_data(self):
-        self.logger.info('Strategy Data', data=self.strategy_data)
+        self.logger.info('Strategy Indicator Data:')
+        for indicator in self.strategy_data:
+            self.logger.info('Indicator {indicator} with value {value}'
+                             .format(indicator=indicator, value=self.strategy_data[indicator]))
 
     def load_strategy(self, strategy_id):
         query = {'_id': ObjectId(strategy_id)}

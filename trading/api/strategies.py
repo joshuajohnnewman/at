@@ -1,16 +1,15 @@
 from flask_restful import Resource
 
-from trading.api import ok
-from trading.db import get_database
+from trading.db import get_database, transform_son
 
 
 class Strategies(Resource):
     def get(self):
         print('STRATEGIES ENDPOINT')
         db = get_database()
-        strategies = list(db.strategies.find({}))
+        query = {}
+        strategies = list(db.strategies.find(query))
 
-        return {'live_strategies': strategies}
+        strategies = map(transform_son, strategies)
 
-    def post(self):
-        return ok()
+        return {'strategies': strategies}

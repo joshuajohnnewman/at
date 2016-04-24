@@ -7,9 +7,9 @@ from trading.algorithms.constants import INSTRUMENT_EUR_USD
 def main():
     broker = OandaBroker()
 
-    pair_a =  {'name': 'usd', 'amount': 1000}
-    pair_b = {'name': 'eur', 'amount': 0}
-
+    pair_a =  {'name': 'usd', 'starting_currency': 1000, 'tradeable_currency': 1000}
+    pair_b = {'name': 'eur', 'starting_currency': 0, 'tradeable_currency': 0}
+    strategy_id = '571d2ec21689011340cce43f'
     instrument = INSTRUMENT_EUR_USD
 
     config = {
@@ -17,7 +17,11 @@ def main():
         'pair_a': pair_a,
         'pair_b': pair_b
     }
-    josh_strategy = Josh({}, '571bb64b16890190cbd86a54')
+
+    id_config = {
+        'strategy_id': strategy_id
+    }
+    josh_strategy = Josh(id_config)
 
     strategy = LiveTradingStrategy(josh_strategy, broker)
     strategy.tick()

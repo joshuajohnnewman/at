@@ -1,3 +1,6 @@
+KeyboardInterruptMessage = 'manually stopped strategy'
+
+
 class LiveTradingException(Exception):
     """
     Base class for live trading errors.

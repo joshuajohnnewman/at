@@ -1,4 +1,5 @@
 import datetime
+import math
 
 from bson import ObjectId
 from decimal import Decimal
@@ -18,7 +19,9 @@ class Josh(Strategy):
     long_exit_sensitivity = 10
     short_exit_sensitivity = 5
 
-    def __init__(self, config, strategy_id):
+    def __init__(self, config):
+        strategy_id = config.get('strategy_id')
+
         if strategy_id is None:
             strategy_id = ObjectId()
         else:
@@ -28,12 +31,13 @@ class Josh(Strategy):
         self.strategy_id = strategy_id
         self.invested = False
 
-    def calc_amount_to_buy(self, current_price):
-        pair_a_tradeable = self.portfolio.pair_a['tradable_currency']
-        return pair_a_tradeable / current_price
+    def calc_units_to_buy(self, current_price):
+        pair_a_tradeable = self.portfolio.pair_a.tradeable_currency
+        num_units = math.floor(pair_a_tradeable / current_price)
+        return int(num_units)
 
-    def calc_amount_to_sell(self, current_price):
-        pair_b_tradeable = self.portfolio.pair_b['tradeable_currency']
+    def calc_units_to_sell(self, current_price):
+        pair_b_tradeable = self.portfolio.pair_b.tradeable_currency
         return pair_b_tradeable
 
     def allocate_tradeable_amount(self):
@@ -41,7 +45,7 @@ class Josh(Strategy):
         profit = self.portfolio.profit
 
         if profit > 0:
-            pair_a['tradeable_currency'] = pair_a['initial_currency']
+            pair_a.tradeable_currency = pair_a.starting_currency
 
     def analyze_data(self, market_data):
 
@@ -80,7 +84,8 @@ class Josh(Strategy):
         order = None
 
         if candle_exit is not None:
-            self.logger.info('Candle exit decision {dec}'.format(dec=candle_exit))
+            #self.logger.info('Candle exit decision {dec}'.format(dec=candle_exit))
+            pass
 
         if asking_price < (long_candle_exit - self.long_exit_sensitivity):
             order_decision = SIDE_SELL
@@ -108,9 +113,9 @@ class Josh(Strategy):
         trade_expire = trade_expire.isoformat("T") + "Z"
 
         if order_side == SIDE_BUY:
-            units = self.calc_amount_to_buy(asking_price)
+            units = self.calc_units_to_buy(asking_price)
         else:
-            units = self.calc_amount_to_sell(asking_price)
+            units = self.calc_units_to_sell(asking_price)
 
         instrument = self.portfolio.instrument
         side = order_side
@@ -121,19 +126,20 @@ class Josh(Strategy):
         return MarketOrder(instrument, units, side, order_type, price, expiry)
 
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
-        serialized_portfolio = self.portfolio.serialize()
-
         session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
+
+        pair_a = self.portfolio.pair_a
+        pair_b = self.portfolio.pair_b
 
         config = {
             'instrument': self.portfolio.instrument,
-            'pair_a': self.portfolio.pair_a,
-            'pair_b': self.portfolio.pair_b
+            'pair_a': {'name': pair_a.name, 'starting_currency': pair_a.starting_currency, 'tradeable_currency': pair_a.tradeable_currency},
+            'pair_b': {'name': pair_b.name, 'starting_currency': pair_b.starting_currency, 'tradeable_currency': pair_b.tradeable_currency}
         }
 
         strategy = {
             'config': config,
-            'portfolio': serialized_portfolio,
+            'profit': self.portfolio.profit,
             'data_window': self.data_window,
             'interval': self.interval,
             'indicators': self.strategy_data.keys(),

@@ -1,17 +1,14 @@
 from collections import namedtuple
 from trading.broker import SIDE_SELL, SIDE_BUY
 
-PrimaryPair = namedtuple('PrimaryPair', ('currency_a', 'currency_b'))
+PrimaryPair = namedtuple('PrimaryPair', ('a', 'b'))
+Pair = namedtuple('Pair', ('name', 'starting_currency', 'tradeable_currency'))
 
 class Portfolio:
 
     def __init__(self, instrument, pair_a, pair_b):
-        pair_a['tradeable_currency'] = pair_a['amount']
-        pair_a['initial_currency'] = pair_a['amount']
-        pair_b['tradeable_currency'] = pair_b['amount']
-        pair_b['initial_currency'] = pair_b['amount']
-        self.pair_a = pair_a
-        self.pair_b = pair_b
+        self.pair_a = Pair(pair_a['name'], pair_a['starting_currency'], pair_a['tradeable_currency'])
+        self.pair_b = Pair(pair_b['name'], pair_b['starting_currency'], pair_b['tradeable_currency'])
         self.primary_pair = PrimaryPair(pair_a['name'], pair_b['name'])
 
         self.instrument = instrument
@@ -39,18 +36,18 @@ class Portfolio:
         total_traded = units * price
 
         if side == SIDE_SELL:
-            current_pair_a = self.pair_a['tradeable_currency']
-            current_pair_b = self.pair_b['tradeable_currency']
+            current_pair_a = self.pair_a.tradeable_currency
+            current_pair_b = self.pair_b.tradeable_currency
             new_pair_b = current_pair_b - total_traded
             new_pair_a = current_pair_a + total_traded
-            self.pair_a['tradeable_currency'] = new_pair_a
-            self.pair_b['tradeable_currency'] = new_pair_b
+            self.pair_a.tradeable_currency = new_pair_a
+            self.pair_b.tradeable_currency = new_pair_b
         elif side == SIDE_BUY:
-            current_pair_a = self.pair_a['tradeable_currnecy']
-            current_pair_b = self.pair_b['tradeable_currency']
+            current_pair_a = self.pair_a.tradeable_currency
+            current_pair_b = self.pair_b.tradeable_currency
             new_pair_a = current_pair_a - total_traded
             new_pair_b = current_pair_b + total_traded
-            self.pair_a['tradeable_currency'] = new_pair_a
-            self.pair_b['tradeable_currency'] = new_pair_b
+            self.pair_a.tradeable_currency = new_pair_a
+            self.pair_b.tradeable_currency = new_pair_b
 
-        self.profit = self.pair_a['initial_currency'] - self.pair_a['tradeable_currency']
+        self.profit = self.pair_a.starting_currency - self.pair_a.tradeable_currency

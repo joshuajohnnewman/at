@@ -4,9 +4,10 @@ from trading.indicators.volatility_indicators import calc_average_true_range
 
 TRADING_PERIOD_MONTH = 22
 
-INTERVAL_NINETY_DAYS = 90 # Long Interval
-INTERVAL_FORTY_DAYS = 40 # Medium Interval
-INTERVAL_TEN_DAYS = 10 # Short Interval
+INTERVAL_NINETY_DAYS = 90
+INTERVAL_FORTY_DAYS = 40
+INTERVAL_TWENTY_DAYS = 20
+INTERVAL_TEN_DAYS = 10
 
 
 def get_period_high(daily_highs, days=1):

@@ -61,7 +61,6 @@ class RFClassifier(Classifier):
 
     def prepare_prediction_data(self, strategy_data):
         X = []
-        print(strategy_data)
         features = strategy_data.keys()
         data = []
         for feature in features:
