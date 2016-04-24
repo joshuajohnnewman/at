@@ -4,7 +4,8 @@ from bson import ObjectId
 from decimal import Decimal
 
 from trading.algorithms.base import Strategy
-from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY
+from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, \
+    PRICE_LOW_ASK
 from trading.data.transformations import normalize_price_data
 from trading.indicators.talib_indicators import calc_std, calc_ma
 from trading.indicators import calc_chandalier_exits, INTERVAL_FORTY_DAYS
@@ -27,11 +28,11 @@ class Josh(Strategy):
         self.invested = False
 
     def calc_amount_to_buy(self, current_price):
-        pair_a_tradeable = self.portfolio.pair_a['tradeable_currency']
+        pair_a_tradeable = self.portfolio.pair_a['tradable_currency']
         return pair_a_tradeable / current_price
 
     def calc_amount_to_sell(self, current_price):
-        pair_b_tradeable = self.portfolio.pair_b['tradeable_curency']
+        pair_b_tradeable = self.portfolio.pair_b['tradeable_currency']
         return pair_b_tradeable
 
     def allocate_tradeable_amount(self):
@@ -44,9 +45,9 @@ class Josh(Strategy):
     def analyze_data(self, market_data):
 
         market_data = market_data['candles']
-        closing_market_data = normalize_price_data(market_data, 'closeAsk')
-        high_market_data = normalize_price_data(market_data, 'highAsk')
-        low_market_data = normalize_price_data(market_data, 'lowAsk')
+        closing_market_data = normalize_price_data(market_data, PRICE_ASK_CLOSE)
+        high_market_data = normalize_price_data(market_data, PRICE_ASK_HIGH)
+        low_market_data = normalize_price_data(market_data, PRICE_LOW_ASK)
 
         std = Decimal(calc_std(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
 
@@ -118,10 +119,10 @@ class Josh(Strategy):
 
         return MarketOrder(instrument, units, side, order_type, price, expiry)
 
-    def shutdown(self, started_at, ended_at, num_ticks, shutdown_cause):
+    def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         serialized_portfolio = self.portfolio.serialize()
 
-        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, shutdown_cause)
+        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
 
         config = {
             'instrument': self.portfolio.instrument,
@@ -136,9 +137,7 @@ class Josh(Strategy):
             'interval': self.interval,
             'indicators': self.strategy_data.keys(),
             'instrument': self.instrument,
-
         }
-
 
         query = {'_id': ObjectId(self.strategy_id)}
         update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}

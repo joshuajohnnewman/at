@@ -15,8 +15,14 @@ class MAC(Strategy):
 
     crossover_threshold = 0.005
 
-    def __init__(self, primary_pair, starting_currency, instrument):
-        super(MAC, self).__init__(primary_pair, starting_currency, instrument)
+    def __init__(self, config, strategy_id):
+        if strategy_id is None:
+            strategy_id = ObjectId()
+        else:
+            config = self.load_strategy(strategy_id)
+
+        super(MAC, self).__init__(config)
+        self.strategy_id = strategy_id
         self.invested = False
 
     def calc_amount_to_buy(self, current_price):
@@ -83,27 +89,30 @@ class MAC(Strategy):
 
         return MarketOrder(instrument, units, side, order_type, price, expiry)
 
-    def shutdown(self, started_at, ended_at, num_ticks, shutdown_cause):
+    def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         serialized_portfolio = self.portfolio.serialize()
 
-        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, shutdown_cause)
+        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
 
-        strategy = {
-            'portfolio': serialized_portfolio,
-            'classifier_id': self.classifier.classifier_id,
-            'num_ticks': self.num_ticks,
-            'interval': self.interval,
-            'data_window': self.data_window,
-            'indicators': self.strategy_data.keys(),
-            'instrument': self.instrument
+        config = {
+            'instrument': self.portfolio.instrument,
+            'pair_a': self.portfolio.pair_a,
+            'pair_b': self.portfolio.pair_b
         }
 
-        query = {'_id': ObjectId(self.id)}
+        strategy = {
+            'config': config,
+            'portfolio': serialized_portfolio,
+            'data_window': self.data_window,
+            'interval': self.interval,
+            'indicators': self.strategy_data.keys(),
+            'instrument': self.instrument,
+
+        }
+
+        query = {'_id': ObjectId(self.strategy_id)}
         update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
+        self.db.strategies.update(query, update, upsert=True)
 
-        self.db.strategies.update(query, update)
-
-    def update_portfolio(self, order_response):
-        self.logger.info('Order Response')
 
 

@@ -1,4 +1,5 @@
 from collections import namedtuple
+from trading.broker import SIDE_SELL, SIDE_BUY
 
 PrimaryPair = namedtuple('PrimaryPair', ('currency_a', 'currency_b'))
 
@@ -9,10 +10,11 @@ class Portfolio:
         pair_a['initial_currency'] = pair_a['amount']
         pair_b['tradeable_currency'] = pair_b['amount']
         pair_b['initial_currency'] = pair_b['amount']
-        self.instrument = instrument
         self.pair_a = pair_a
         self.pair_b = pair_b
         self.primary_pair = PrimaryPair(pair_a['name'], pair_b['name'])
+
+        self.instrument = instrument
         self.profit = 0
 
     def __repr__(self):
@@ -29,7 +31,26 @@ class Portfolio:
         }
 
     def update(self, order_response):
-        pass
+        order = order_response['orderOpened']
+        units = order['units']
+        side = order['side']
+        price = order_response['price']
 
+        total_traded = units * price
 
+        if side == SIDE_SELL:
+            current_pair_a = self.pair_a['tradeable_currency']
+            current_pair_b = self.pair_b['tradeable_currency']
+            new_pair_b = current_pair_b - total_traded
+            new_pair_a = current_pair_a + total_traded
+            self.pair_a['tradeable_currency'] = new_pair_a
+            self.pair_b['tradeable_currency'] = new_pair_b
+        elif side == SIDE_BUY:
+            current_pair_a = self.pair_a['tradeable_currnecy']
+            current_pair_b = self.pair_b['tradeable_currency']
+            new_pair_a = current_pair_a - total_traded
+            new_pair_b = current_pair_b + total_traded
+            self.pair_a['tradeable_currency'] = new_pair_a
+            self.pair_b['tradeable_currency'] = new_pair_b
 
+        self.profit = self.pair_a['initial_currency'] - self.pair_a['tradeable_currency']

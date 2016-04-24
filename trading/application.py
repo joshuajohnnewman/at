@@ -1,6 +1,3 @@
-import logging
-import os
-
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from flask_restful import Api
@@ -9,12 +6,10 @@ from werkzeug.contrib.cache import SimpleCache
 from trading.api import ok
 
 from trading.api.classifiers import Classifiers
-from trading.util.log import configure_logging
 from trading.trading_auth.auth import authorize
+from trading.util.log import Logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('trading-api-{env}'.format(env=os.environ['ENVIRONMENT']))
-logger = configure_logging(logger)
+logger = Logger()
 
 
 class TradingApi(Api):
@@ -46,7 +41,6 @@ def before_request():
         authorize(request)
 
 
-
 @application.teardown_request
 def teardown_request(exception):
     db = getattr(g, 'db', None)
@@ -60,5 +54,4 @@ def status():
 
 
 if __name__ == '__main__':
-    configure_logging(application.logger)
     application.run()

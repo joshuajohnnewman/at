@@ -1,7 +1,9 @@
 import time
 
 from trading.algorithms import ORDER_STAY
+from trading.live_trading.exceptions import LiveTradingException
 from trading.util.log import Logger
+
 
 
 class LiveTradingStrategy:
@@ -9,6 +11,7 @@ class LiveTradingStrategy:
 
     def __init__(self, strategy, broker):
         self.ticks = 0
+        self.num_orders = 0
         self.start_time = time.time()
 
         self.strategy = strategy
@@ -31,22 +34,22 @@ class LiveTradingStrategy:
             if order_decision is not ORDER_STAY:
                 order_response = self.broker.make_order(market_order)
                 self.strategy.update_portfolio(order_response)
+                self.num_orders += 1
 
             time.sleep(self.interval)
             self.ticks += 1
             self.tick()
 
-        # Todo make custom exceptions
         except (KeyboardInterrupt, SystemExit) as e:
             self.logger.error('Manually Stopped Live Trading', data=e)
             self.shutdown('KEYBOARD INTERRUPT')
-        except Exception as e:
+        except LiveTradingException as e:
             self.logger.error('Live Trading Error', data=e)
             self.shutdown(e)
 
     def shutdown(self, e):
         self.end_time = time.time()
-        self.strategy.shutdown(self.start_time, self.end_time, self.ticks, str(e))
+        self.strategy.shutdown(self.start_time, self.end_time, self.ticks, self.num_orders, str(e))
         self.logger.info('Shut down live trading strategy successfully')
 
 

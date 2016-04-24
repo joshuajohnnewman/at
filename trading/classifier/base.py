@@ -20,28 +20,21 @@ predictions_map = {
 class Classifier:
     __metaclass__ = ABCMeta
 
+    _db = None
     _logger = None
 
     def __init__(self, config):
-        classifier_id = config['classifier_id']
-        if classifier_id is None:
-            classifier_id = ObjectId()
-        else:
-            classifier = self.db.classifiers.find_one({'_id': ObjectId(classifier_id)})
-            self.classifier = self.load_serialized_classifier(classifier)
-
-        self.classifier_id = classifier_id
-
+        pass
 
     def passes_filter(self, datum):
         return True
 
     @abstractmethod
-    def load_serialized_classifier(self, serialized_classifier):
+    def load(self, serialized_classifier):
         raise NotImplementedError
 
     @abstractmethod
-    def serialize_classifier(self):
+    def serialize(self):
         raise NotImplementedError
 
     def prepare_training_data(self, strategy_data):

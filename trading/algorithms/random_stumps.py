@@ -4,7 +4,6 @@ from decimal import Decimal
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
-from trading.algorithms.util import make_trading_session_info
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY
 from trading.classifier.random_forest import RFClassifier
 from trading.data.transformations import normalize_price_data
@@ -17,11 +16,16 @@ class RandomStumps(Strategy):
 
     _classifier = None
 
-    def __init__(self, num_ticks, primary_pair, starting_currency, instrument, classifier_id):
-        super(RandomStumps, self).__init__(num_ticks, primary_pair, starting_currency, instrument)
+    def __init__(self, config, strategy_id):
+        if strategy_id is None:
+            self.strategy_id = ObjectId()
+        else:
+            config = self.load_strategy(strategy_id)
+
+        super(RandomStumps, self).__init__(config)
+        self.strategy_id = strategy_id
+        self.classifier_config = config['classifier_config']
         self.invested = False
-        self.classifier_id = classifier_id
-        self.classifier
 
     def calc_amount_to_buy(self, current_price):
         return self.portfolio.pair_a['tradeable_currency'] / current_price
@@ -36,6 +40,7 @@ class RandomStumps(Strategy):
             pair_a['tradeable_currency'] = pair_a['initial_currency']
 
     def analyze_data(self, market_data):
+        market_data = market_data['candles']
         closing_market_data = normalize_price_data(market_data, 'closeAsk')
 
         # Construct the upper and lower Bollinger Bands
@@ -48,7 +53,10 @@ class RandomStumps(Strategy):
 
     def make_decision(self):
         X = self.strategy_data
+
+        self.logger.info('Make Decision', data=X)
         prediction = self.classifier.predict(X, format_data=True, unwrap_prediction=True)
+
         return prediction
 
     def make_order(self, asking_price, order_side=SIDE_BUY):
@@ -68,31 +76,33 @@ class RandomStumps(Strategy):
 
         return MarketOrder(instrument, units, side, order_type, price, expiry)
 
-    def update_portfolio(self, order_response):
-        self.logger.info('Order Response')
-
-    def shutdown(self, started_at, ended_at, num_ticks, shutdown_cause):
+    def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         serialized_portfolio = self.portfolio.serialize()
 
-        session_info = make_trading_session_info(started_at, ended_at, num_ticks, shutdown_cause)
+        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
 
-        strategy = {
-            'portfolio': serialized_portfolio,
-            'classifier_id': self.classifier.classifier_id,
-            'num_ticks': self.num_ticks,
-            'interval': self.interval,
-            'data_window': self.data_window,
-            'indicators': self.strategy_data.keys(),
-            'instrument': self.instrument
+        config = {
+            'instrument': self.portfolio.instrument,
+            'pair_a': self.portfolio.pair_a,
+            'pair_b': self.portfolio.pair_b
         }
 
-        query = {'_id': ObjectId(self.id)}
+        strategy = {
+            'config': config,
+            'portfolio': serialized_portfolio,
+            'data_window': self.data_window,
+            'interval': self.interval,
+            'indicators': self.strategy_data.keys(),
+            'instrument': self.instrument,
+        }
+
+        query = {'_id': ObjectId(self.strategy_id)}
         update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
 
         classifier_query = {'_id': ObjectId(self.classifier.classifier_id)}
         serialized_classifier = self.classifier.serialize()
 
-        self.db.strategies.update(query, update)
+        self.db.strategies.update(query, update, upsert=True)
         self.db.classifiers.update(classifier_query, serialized_classifier)
 
     def _normalize_price_data(self, price_data, target_field='ask'):
@@ -102,5 +112,5 @@ class RandomStumps(Strategy):
     @property
     def classifier(self):
         if self._classifier is None:
-            self._classifier = RFClassifier()
+            self._classifier = RFClassifier(self.classifier_config)
         return self._classifier

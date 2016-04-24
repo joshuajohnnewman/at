@@ -1,13 +1,14 @@
 from flask_restful import Resource
 
-from trading.api import abort
-from trading.db import get_database
+from trading.db import get_database, transform_son
 
 
 class Classifiers(Resource):
     def get(self):
         print('OBJECTIVE CLASSIFIER ENDPOINT')
         db = get_database()
-        classifiers = list(db.classifiers.find({}))
+        print('db', db)
+        classifiers = transform_son(db.classifiers.find_one({}))
+        print(classifiers)
 
         return {'classifiers': classifiers}
