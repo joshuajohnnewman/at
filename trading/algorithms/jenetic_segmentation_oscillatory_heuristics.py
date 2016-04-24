@@ -7,7 +7,8 @@ from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, \
     PRICE_LOW_ASK
 from trading.data.transformations import normalize_price_data
-from trading.indicators.talib_indicators import calc_std, calc_ma
+from trading.indicators.price_transformation import calc_standard_deviation
+from trading.indicators.overlap_studies import calc_moving_average
 from trading.indicators import calc_chandalier_exits, INTERVAL_FORTY_DAYS
 
 
@@ -49,10 +50,10 @@ class Josh(Strategy):
         high_market_data = normalize_price_data(market_data, PRICE_ASK_HIGH)
         low_market_data = normalize_price_data(market_data, PRICE_LOW_ASK)
 
-        std = Decimal(calc_std(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
+        std = Decimal(calc_standard_deviation(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
 
         # Construct the upper and lower Bollinger Bands
-        ma = Decimal(calc_ma(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
+        ma = Decimal(calc_moving_average(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
         upper = ma + (Decimal(2) * std)
         lower = ma - (Decimal(2) * std)
 

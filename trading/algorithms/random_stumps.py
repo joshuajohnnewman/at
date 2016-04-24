@@ -8,7 +8,7 @@ from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY
 from trading.classifier.random_forest import RFClassifier
 from trading.data.transformations import normalize_price_data
 from trading.indicators import INTERVAL_TEN_DAYS
-from trading.indicators.talib_indicators import calc_ma
+from trading.indicators.overlap_studies import calc_ma
 
 
 class RandomStumps(Strategy):

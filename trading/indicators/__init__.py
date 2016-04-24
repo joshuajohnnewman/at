@@ -1,6 +1,6 @@
 import scipy
 
-from trading.indicators.talib_indicators import calc_atr
+from trading.indicators.volatility_indicators import calc_average_true_range
 
 TRADING_PERIOD_MONTH = 22
 
@@ -38,7 +38,7 @@ def calc_chandalier_exits(closing_data, high_data, low_data, volatility_threshol
     """
     month_high = get_period_high(closing_data, trading_period)
     month_low = get_period_low(closing_data, trading_period)
-    atr = calc_atr(closing_data, high_data, low_data, trading_period)
+    atr = calc_average_true_range(closing_data, high_data, low_data, trading_period)
     long_exit = month_high - (atr * volatility_threshold)
     short_exit = month_low + (atr * volatility_threshold)
 
