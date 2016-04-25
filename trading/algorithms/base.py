@@ -16,7 +16,7 @@ class Strategy(object):
     _db = None
     _logger = None
 
-    interval = INTERVAL_ONE_HOUR
+    interval = 10
     strategy_data = {}
 
     name = 'Base Strategy'

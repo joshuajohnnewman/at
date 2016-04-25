@@ -28,7 +28,8 @@ class Portfolio:
         }
 
     def update(self, order_response):
-        order = order_response['orderOpened']
+        print(order_response)
+        order = order_response['tradeOpened']
         units = order['units']
         side = order['side']
         price = order_response['price']
@@ -38,16 +39,16 @@ class Portfolio:
         if side == SIDE_SELL:
             current_pair_a = self.pair_a.tradeable_currency
             current_pair_b = self.pair_b.tradeable_currency
-            new_pair_b = current_pair_b - total_traded
-            new_pair_a = current_pair_a + total_traded
-            self.pair_a.tradeable_currency = new_pair_a
-            self.pair_b.tradeable_currency = new_pair_b
+            new_pair_b_tradeable = current_pair_b - total_traded
+            new_pair_a_tradeable = current_pair_a + total_traded
+            self.pair_a.tradeable_currency = new_pair_a_tradeable
+            self.pair_b.tradeable_currency = new_pair_b_tradeable
         elif side == SIDE_BUY:
             current_pair_a = self.pair_a.tradeable_currency
             current_pair_b = self.pair_b.tradeable_currency
-            new_pair_a = current_pair_a - total_traded
-            new_pair_b = current_pair_b + total_traded
-            self.pair_a.tradeable_currency = new_pair_a
-            self.pair_b.tradeable_currency = new_pair_b
+            new_pair_a_tradeable = current_pair_a - total_traded
+            new_pair_b_tradeable = current_pair_b + total_traded
+            self.pair_a.tradeable_currency = new_pair_a_tradeable
+            self.pair_b.tradeable_currency = new_pair_b_tradeable
 
         self.profit = self.pair_a.starting_currency - self.pair_a.tradeable_currency

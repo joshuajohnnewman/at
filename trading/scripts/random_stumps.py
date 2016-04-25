@@ -23,7 +23,7 @@ def main():
     }
 
 
-    random_stumps_strategy = RandomStumps(strategy_config, strategy_id)
+    random_stumps_strategy = RandomStumps(strategy_config)
 
     strategy = LiveTradingStrategy(random_stumps_strategy, broker)
     strategy.tick()

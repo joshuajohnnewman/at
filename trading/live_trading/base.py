@@ -7,6 +7,7 @@ from trading.util.log import Logger
 
 
 class LiveTradingStrategy:
+    orders = {}
     _logger = None
 
     def __init__(self, strategy, broker):
@@ -23,6 +24,9 @@ class LiveTradingStrategy:
     def tick(self):
         try:
             self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
+            order_ids, order_responses = self.get_order_updates()
+            if order_ids:
+                self.strategy.update_portfolio(order_responses)
 
             market_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
             self.strategy.analyze_data(market_data)
@@ -33,7 +37,12 @@ class LiveTradingStrategy:
             if order_decision is not ORDER_STAY:
                 self.log_market_order(order_decision, market_order)
                 order_response = self.broker.make_order(market_order)
-                self.strategy.update_portfolio(order_response)
+                print(order_response)
+                trade_opened = order_response.get('tradeOpened')
+                if trade_opened:
+                    self.strategy.update_portfolio(order_response)
+                else:
+                    self.orders[trade_opened['id']] = order_response
                 self.num_orders += 1
 
             time.sleep(self.interval)
@@ -46,6 +55,23 @@ class LiveTradingStrategy:
         except LiveTradingException as e:
             self.logger.error('Live Trading Error', data=e)
             self.shutdown(e)
+
+
+    def get_order_updates(self):
+        order_ids = self.orders.keys()
+        order_info_map = {}
+        valid_order_ids = []
+
+        for order_id in order_ids:
+            try:
+                order_information = self.broker.get_order(order_id)
+                order_info_map[order_id] = order_information
+                valid_order_ids.append(order_id)
+            except Exception as e:
+                print e
+
+        self.logger.info('Order Map', data=order_info_map)
+        return valid_order_ids, order_info_map
 
     def shutdown(self, e):
         self.end_time = time.time()

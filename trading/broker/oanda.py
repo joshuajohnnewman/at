@@ -22,6 +22,10 @@ class OandaBroker(Broker, EndpointsMixin):
         broker_response = self.oanda.get_history(instrument=instrument, count=count, granularity=granularity)
         return broker_response
 
+    def get_order(self, order_id):
+        order_information = self.oanda.get_order(self.account_id, order_id)
+        return order_information
+
     def make_order(self, order):
         order_confirmation = self.oanda.create_order(self.account_id,
                                                  instrument=order.instrument,
