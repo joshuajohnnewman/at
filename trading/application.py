@@ -1,13 +1,13 @@
-from flask import Flask, request, jsonify, g
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_restful import Api
 from werkzeug.contrib.cache import SimpleCache
 
 from trading.api import ok
 
+from trading.api.candle import Candle
 from trading.api.classifiers import Classifiers
 from trading.api.strategies import Strategies
-from trading.trading_auth.auth import authorize
 from trading.util.log import Logger
 
 logger = Logger()
@@ -30,23 +30,14 @@ application.debug = 'DEBUG'
 
 cache = SimpleCache()
 
-cors = CORS(application)
-
 api = TradingApi(application, prefix='/api/v1')
+api.add_resource(Candle, '/candle')
 api.add_resource(Classifiers, '/classifiers')
 api.add_resource(Strategies, '/strategies')
 
-@application.before_request
-def before_request():
-    if request.path not in UNAUTHENTICATED_ENDPOINTS and request.method not in UNAUTHENTICATED_METHODS:
-        authorize(request)
 
+CORS(application)
 
-@application.teardown_request
-def teardown_request(exception):
-    db = getattr(g, 'db', None)
-    if db is not None:
-        db.client.close()
 
 
 @application.route('/status')
@@ -55,4 +46,7 @@ def status():
 
 
 if __name__ == '__main__':
+    from flask import url_for
+    with application.test_request_context():
+        print url_for('candle')
     application.run()

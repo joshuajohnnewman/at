@@ -5,3 +5,4 @@ dist
 *.pyc
 .ipynb_checkpoints
 notebooks
+client
