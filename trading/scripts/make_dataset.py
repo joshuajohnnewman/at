@@ -20,7 +20,7 @@ def make_candle_data(start, granularity,  num_candles):
         if granularity == 'h':
             ndt = ndt + datetime.timedelta(hours=1)
         elif granularity == 'd':
-            ndt = ndt + datetime.timedelta(hours=1)
+            ndt = ndt + datetime.timedelta(days=1)
         datetimes.append(ndt)
 
 

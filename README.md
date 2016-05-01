@@ -16,6 +16,7 @@
 
 ### API (Interactive Candlestick Chart Marking)
 - Start Mongod Process by running starting script: bash trading/scripts/start.sh
+- python scripts/make_dataset.py 2015 1 1 h 2000
 - To inspect database run command mongodb
     - use $db
     - show tables
