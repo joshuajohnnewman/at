@@ -69,3 +69,52 @@ class Candle(Resource):
             print('E', e)
             traceback.print_exc(file=sys.stdout)
         return ok(202)
+
+
+def find_marked_candles(charts):
+    chart_id_candle_map = {}
+
+    for chart in charts:
+        chart_id = chart['id']
+        candles = chart['candles']
+        patterned_candles = [candle for candle in candles if candle.get('pattern')]
+        chart_id_candle_map[chart_id] = patterned_candles
+
+    return chart_id_candle_map
+
+
+class CandleCharts(Resource):
+    def get(self):
+        db = get_database()
+        charts = db.candle_data.find()
+        charts = map(transform_son, charts)
+
+        chart_data = {}
+
+        for chart in charts:
+            chart_id = chart['id']
+            granularity = chart['granularity']
+            candles = chart['candles']
+            num_candles = len(candles)
+            start_date = chart['start_date']
+            end_date = chart['end_date']
+            chart_data[chart_id] = {
+                'granularity': granularity,
+                'num_candles': num_candles,
+                'start_date': start_date,
+                'end_date': end_date
+            }
+
+
+        return chart_data
+
+
+class CandlePattern(Resource):
+    def get(self):
+        db = get_database()
+        charts = db.candle_data.find()
+        charts = map(transform_son, charts)
+
+        marked_candles = find_marked_candles(charts)
+
+        return {'candles': marked_candles}

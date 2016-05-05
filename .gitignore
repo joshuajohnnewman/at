@@ -4,5 +4,4 @@ dist
 .idea
 *.pyc
 .ipynb_checkpoints
-notebooks
 client
