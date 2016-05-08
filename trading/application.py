@@ -5,7 +5,7 @@ from werkzeug.contrib.cache import SimpleCache
 
 from trading.api import ok
 
-from trading.api.candle import Candle
+from trading.api.candle import Candle, CandleCharts
 from trading.api.classifiers import Classifiers
 from trading.api.strategies import Strategies
 from trading.util.log import Logger
@@ -32,6 +32,7 @@ cache = SimpleCache()
 
 api = TradingApi(application, prefix='/api/v1')
 api.add_resource(Candle, '/candle')
+api.add_resource(CandleCharts, '/charts')
 api.add_resource(Classifiers, '/classifiers')
 api.add_resource(Strategies, '/strategies')
 

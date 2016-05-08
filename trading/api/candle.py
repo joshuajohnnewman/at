@@ -9,6 +9,15 @@ from trading.api import ok
 from trading.db import get_database, transform_son
 
 
+def _find_chart_start_end_date(candles):
+    sorted_candles = sorted(candles, key=lambda t: t['date']['utc'])
+
+    start = sorted_candles[0]['date']['utc']
+    end = sorted_candles[-1]['date']['utc']
+
+    return start, end
+
+
 def _find_target_candle(target_candle, date_id_map):
     target_date = target_candle['date']
     matching_candle = date_id_map[target_date]
@@ -20,7 +29,7 @@ def make_date_id_map(candles):
 
     for candle in candles:
         date = candle['date']
-        formatted_date = str(date['year']) + '-' + str(date['month']) + '-' + str(date['day']) + '-' + str(date['hour'])
+        formatted_date = '-'.join([str(date['year']), str(date['month']), str(date['day']), str(date['hour']), str(date['minute'])])
         date_id_map[formatted_date] = candle
     return date_id_map
 
@@ -28,13 +37,19 @@ def make_date_id_map(candles):
 class Candle(Resource):
     def get(self):
         print('At Candle GET Endpoint')
+        try:
+            print request.query_string
+            chart_id = request.query_string.split('=')[1]
 
-        db = get_database()
-        chart_data = transform_son(db.candle_data.find_one())
-        title = chart_data['title']
-        y_params = chart_data['y_params']
-        x_params = chart_data['x_params']
-        candles = chart_data['candles']
+            db = get_database()
+            chart_data = transform_son(db.candle_data.find_one({'_id': ObjectId(chart_id)}))
+            title = chart_data['title']
+            y_params = chart_data['y_params']
+            x_params = chart_data['x_params']
+            candles = chart_data['candles']
+        except Exception as e:
+            print('E', e)
+            traceback.print_exc(file=sys.stdout)
 
         return {'candles': candles, 'chart_id': chart_data['id'], 'title': title, 'y_params': y_params, 'x_params': x_params}
 
@@ -42,9 +57,6 @@ class Candle(Resource):
     def post(self):
         print('At Candle POST Endpoint')
         request_data = request.get_json()
-        start_date = request_data.get('start_date')
-        end_date = request_data.get('end_date')
-        granularity = request_data.get('granularity')
         candle = request_data.get('candle')
         pattern = request_data.get('pattern')
         chart_id = request_data.get('chart_id')
@@ -91,22 +103,27 @@ class CandleCharts(Resource):
 
         chart_data = {}
 
-        for chart in charts:
-            chart_id = chart['id']
-            granularity = chart['granularity']
-            candles = chart['candles']
-            num_candles = len(candles)
-            start_date = chart['start_date']
-            end_date = chart['end_date']
-            chart_data[chart_id] = {
-                'granularity': granularity,
-                'num_candles': num_candles,
-                'start_date': start_date,
-                'end_date': end_date
-            }
+        try:
+            for chart in charts:
+                chart_id = chart['id']
+                granularity = chart['granularity']
+                candles = chart['candles']
+                instrument = chart['instrument']
+                start_date, end_date = _find_chart_start_end_date(candles)
 
+                num_candles = len(candles)
+                chart_data[chart_id] = {
+                    'instrument': instrument,
+                    'granularity': granularity,
+                    'num_candles': num_candles,
+                    'start_date': start_date,
+                    'end_date': end_date
+                }
+        except Exception as e:
+            print('E', e)
+            traceback.print_exc(file=sys.stdout)
 
-        return chart_data
+        return {'charts': chart_data}
 
 
 class CandlePattern(Resource):
