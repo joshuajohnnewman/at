@@ -6,7 +6,6 @@ from trading.db import get_database, transform_son
 class Classifiers(Resource):
     def get(self):
         print('CLASSIFIER ENDPOINT')
-        return {'yes': 'yes'}
         db = get_database()
         query = {}
         projection = {'classifier': False}
