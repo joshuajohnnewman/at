@@ -23,10 +23,14 @@ class LiveTradingStrategy:
 
     def tick(self):
         try:
+            self.logger.info('Current Portfolio {portfolio}'.format(portfolio=self.strategy.portfolio))
             self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
-            order_ids, order_responses = self.get_order_updates()
-            if order_ids:
+            order_responses = self.get_order_updates()
+            if order_responses:
+                self.logger.info('Order Responses', data=order_responses)
                 self.strategy.update_portfolio(order_responses)
+                order_ids = order_responses.keys()
+                self.remove_recorded_orders(order_ids)
 
             market_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
             self.strategy.analyze_data(market_data)
@@ -37,12 +41,14 @@ class LiveTradingStrategy:
             if order_decision is not ORDER_STAY:
                 self.log_market_order(order_decision, market_order)
                 order_response = self.broker.make_order(market_order)
-                print(order_response)
+                self.logger.info('Order response {order}'.format(order=order_response))
                 trade_opened = order_response.get('tradeOpened')
                 if trade_opened:
-                    self.strategy.update_portfolio(order_response)
+                    trade_id = trade_opened['id']
+                    self.strategy.update_portfolio({trade_id: order_response})
                 else:
-                    self.orders[trade_opened['id']] = order_response
+                    trade_id = order_response['id']
+                    self.orders[trade_id] = order_response
                 self.num_orders += 1
 
             time.sleep(self.interval)
@@ -56,28 +62,35 @@ class LiveTradingStrategy:
             self.logger.error('Live Trading Error', data=e)
             self.shutdown(e)
 
-
     def get_order_updates(self):
         order_ids = self.orders.keys()
         order_info_map = {}
-        valid_order_ids = []
 
         for order_id in order_ids:
             try:
                 order_information = self.broker.get_order(order_id)
-                order_info_map[order_id] = order_information
-                valid_order_ids.append(order_id)
+                self.logger.info('Order Info for order {order_id} {order_information}'
+                                 .format(order_id=order_id, order_information=order_information))
+
+                if order_information.get('tradeOpened'):
+                    order_info_map[order_id] = order_information
+                else:
+                    self.logger.info('Order {order_id} not filled yet'.format(order_id=order_id))
             except Exception as e:
                 print e
 
-        self.logger.info('Order Map', data=order_info_map)
-        return valid_order_ids, order_info_map
+        self.logger.info('Current Orders', data=order_info_map)
+        return order_info_map
+
+    def remove_recorded_orders(self, order_ids):
+        for order_id in order_ids:
+            self.logger.info('Deleting order', data=order_id)
+            del self.orders[order_id]
 
     def shutdown(self, e):
-        self.end_time = time.time()
-        self.strategy.shutdown(self.start_time, self.end_time, self.ticks, self.num_orders, str(e))
+        end_time = time.time()
+        self.strategy.shutdown(self.start_time, end_time, self.ticks, self.num_orders, str(e))
         self.logger.info('Shut down live trading strategy successfully')
-
 
     def log_market_order(self, decision, market_order):
         now = datetime.datetime.now()
@@ -94,7 +107,6 @@ class LiveTradingStrategy:
                          'expiry at {expiry} for strategy {strategy_name}'
                          .format(order_type=order_type, num_units=num_units, instrument=instrument, price=price,
                                  expiry=expiry, strategy_name=strategy_name))
-
 
     @property
     def logger(self):

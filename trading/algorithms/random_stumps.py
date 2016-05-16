@@ -5,7 +5,7 @@ from decimal import Decimal
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
-from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL
+from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY
 from trading.classifier.random_forest import RFClassifier
 from trading.data.transformations import normalize_price_data
 from trading.indicators import INTERVAL_TEN_DAYS
@@ -71,6 +71,9 @@ class RandomStumps(Strategy):
         else:
             order = None
 
+        if order is None:
+            decision = SIDE_STAY
+
         return decision, order
 
     def make_order(self, asking_price, order_side=SIDE_BUY):
@@ -88,7 +91,10 @@ class RandomStumps(Strategy):
         price = asking_price
         expiry = trade_expire
 
-        return MarketOrder(instrument, units, side, order_type, price, expiry)
+        if units <= 0:
+            return None
+        else:
+            return MarketOrder(instrument, units, side, order_type, price, expiry)
 
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)

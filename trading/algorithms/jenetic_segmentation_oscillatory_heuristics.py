@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, \
-    PRICE_LOW_ASK
+    PRICE_ASK_LOW
 from trading.data.transformations import normalize_price_data
 from trading.indicators.price_transformation import calc_standard_deviation
 from trading.indicators.overlap_studies import calc_moving_average
@@ -52,7 +52,7 @@ class Josh(Strategy):
         market_data = market_data['candles']
         closing_market_data = normalize_price_data(market_data, PRICE_ASK_CLOSE)
         high_market_data = normalize_price_data(market_data, PRICE_ASK_HIGH)
-        low_market_data = normalize_price_data(market_data, PRICE_LOW_ASK)
+        low_market_data = normalize_price_data(market_data, PRICE_ASK_LOW)
 
         std = Decimal(calc_standard_deviation(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
 

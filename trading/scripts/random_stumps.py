@@ -6,7 +6,6 @@ from trading.algorithms.constants import INSTRUMENT_EUR_USD
 
 def main():
     classifier_id = '571bf11f16890198e1e0243d'
-    strategy_id = None
 
     broker = OandaBroker()
     pair_a =  {'name': 'usd', 'starting_currency': 1000, 'tradeable_currency': 1000}

@@ -3,7 +3,6 @@ import time
 from abc import abstractmethod, ABCMeta
 from bson import ObjectId
 
-from trading.algorithms.constants import INTERVAL_ONE_HOUR
 from trading.algorithms.portfolio import Portfolio
 from trading.db import get_database
 from trading.indicators import INTERVAL_FORTY_DAYS
@@ -59,8 +58,8 @@ class Strategy(object):
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         self.logger.info('Shutdown Strategy')
 
-    def update_portfolio(self, order_response):
-        self.portfolio.update(order_response)
+    def update_portfolio(self, order_responses):
+        self.portfolio.update(order_responses)
 
     def log_strategy_data(self):
         self.logger.info('Strategy Indicator Data:')
