@@ -23,9 +23,11 @@ class LiveTradingStrategy:
 
     def tick(self):
         try:
-            self.logger.info('Current Portfolio {portfolio}'.format(portfolio=self.strategy.portfolio))
             self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
+            self.logger.info('Current Portfolio {portfolio}'.format(portfolio=self.strategy.portfolio))
+
             order_responses = self.get_order_updates()
+
             if order_responses:
                 self.logger.info('Order Responses', data=order_responses)
                 self.strategy.update_portfolio(order_responses)

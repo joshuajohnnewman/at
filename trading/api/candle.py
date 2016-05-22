@@ -6,7 +6,7 @@ from bson import ObjectId
 from flask import request
 from flask_restful import Resource
 
-from trading.api import ok
+from trading.api import ok, abort
 from trading.api.util import find_chart_start_end_date, find_marked_candles, find_target_candle, make_date_id_map
 from trading.db import get_database, transform_son
 
@@ -35,6 +35,7 @@ class Candle(Resource):
         except Exception as e:
             logging.info('E %s', e)
             traceback.print_exc(file=sys.stdout)
+            return abort(status=500)
 
         return {'candles': candles, 'chart_id': chart_data['id'], 'title': title, 'y_params': y_params, 'x_params': x_params}
 
@@ -66,6 +67,8 @@ class Candle(Resource):
         except Exception as e:
             logging.error('E %s', e)
             traceback.print_exc(file=sys.stdout)
+            return abort(status=500)
+
         return ok(202)
 
 
@@ -97,6 +100,7 @@ class CandleCharts(Resource):
         except Exception as e:
             logging.error('E %s', e)
             traceback.print_exc(file=sys.stdout)
+            return abort(status=500)
 
         return {'charts': chart_data}
 

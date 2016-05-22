@@ -1,3 +1,7 @@
+import logging
+import sys
+import traceback
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_restful import Api
@@ -15,7 +19,8 @@ logger = Logger()
 
 class TradingApi(Api):
     def handle_error(self, e):
-        logger.error(e, exc_info=True)
+        logging.error('E %s', e)
+        traceback.print_exc(file=sys.stdout)
         code = getattr(e, 'code', 500)
         if code == 500:
             return self.make_response({'errors': [str(e)]}, 500)
