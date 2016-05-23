@@ -7,7 +7,7 @@ from decimal import Decimal
 from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, \
     PRICE_ASK_LOW
-from trading.data.transformations import normalize_price_data
+from trading.data.transformations import normalize_price_data, normalize_current_price_data
 from trading.indicators.price_transformation import calc_standard_deviation
 from trading.indicators.overlap_studies import calc_moving_average
 from trading.indicators import calc_chandalier_exits, INTERVAL_FORTY_DAYS
@@ -48,11 +48,18 @@ class Josh(Strategy):
             pair_a.tradeable_currency = pair_a.starting_currency
 
     def analyze_data(self, market_data):
+        current_market_data = market_data['current']
+        historical_market_data = market_data['historical']
 
-        market_data = market_data['candles']
-        closing_market_data = normalize_price_data(market_data, PRICE_ASK_CLOSE)
-        high_market_data = normalize_price_data(market_data, PRICE_ASK_HIGH)
-        low_market_data = normalize_price_data(market_data, PRICE_ASK_LOW)
+        historical_candle_data = historical_market_data['candles']
+        current_price_data = normalize_current_price_data(current_market_data)
+
+        self.logger.debug(message='Historical Candle data', data=historical_candle_data)
+        self.logger.debug(message='Current Market Data', data=current_price_data)
+
+        closing_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_CLOSE)
+        high_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_HIGH)
+        low_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_LOW)
 
         std = Decimal(calc_standard_deviation(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
 
@@ -63,7 +70,7 @@ class Josh(Strategy):
 
         long_exit, short_exit = calc_chandalier_exits(closing_market_data, high_market_data, low_market_data)
 
-        self.strategy_data['asking_price'] = closing_market_data[-1]
+        self.strategy_data['asking_price'] = current_price_data['ask']
         self.strategy_data['long_candle_exit'] = long_exit
         self.strategy_data['short_candle_exit'] = short_exit
         self.strategy_data['lower_bound_ma'] = lower
@@ -82,10 +89,6 @@ class Josh(Strategy):
 
         order_decision = SIDE_STAY
         order = None
-
-        if candle_exit is not None:
-            #self.logger.info('Candle exit decision {dec}'.format(dec=candle_exit))
-            pass
 
         if asking_price < (long_candle_exit - self.long_exit_sensitivity):
             order_decision = SIDE_SELL
@@ -133,8 +136,11 @@ class Josh(Strategy):
 
         config = {
             'instrument': self.portfolio.instrument,
-            'pair_a': {'name': pair_a.name, 'starting_currency': pair_a.starting_currency, 'tradeable_currency': pair_a.tradeable_currency},
-            'pair_b': {'name': pair_b.name, 'starting_currency': pair_b.starting_currency, 'tradeable_currency': pair_b.tradeable_currency}
+            'pair_a': {'name': pair_a.name, 'starting_currency': pair_a.starting_currency,
+                       'tradeable_currency': pair_a.tradeable_currency},
+
+            'pair_b': {'name': pair_b.name, 'starting_currency': pair_b.starting_currency,
+                       'tradeable_currency': pair_b.tradeable_currency}
         }
 
         strategy = {

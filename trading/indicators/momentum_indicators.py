@@ -2,12 +2,20 @@ import numpy as np
 import talib
 
 
-def calc_average_directional_movement_index():
-    pass
+def calc_average_directional_movement_index(high, low, close, interval):
+    high = np.asarray(high)
+    low = np.asarray(low)
+    close = np.asarray(close)
+    adx = talib.ADX(high, low, close, timeperiod=interval)
+    return adx[-1]
 
 
-def calc_average_directional_movement_index_rating():
-    pass
+def calc_average_directional_movement_index_rating(high, low, close, interval):
+    high = np.asarray(high)
+    low = np.asarray(low)
+    close = np.asarray(close)
+    adxr = talib.ADXR(high, low, close, timeperiod=interval)
+    return adxr[-1]
 
 
 def calc_absolute_price_oscillator():

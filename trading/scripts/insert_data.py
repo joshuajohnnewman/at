@@ -1,9 +1,11 @@
 import json
 
-
+import time
+from bson import ObjectId
 from argparse import ArgumentParser
-
 from trading.db import get_database
+
+DATE_FORMAT = 'YYYY-M-D-H-m'
 
 
 def load_json(file_name):
@@ -14,21 +16,21 @@ def load_json(file_name):
 
 def _get_default_chart(instrument, granularity, title):
     chart_data = {
-        "granularity": granularity,
-        "instrument": instrument,
-        "x_params": {
-            "interval": 1,
-            "valueFormatString": "YYYY-M-D-H-m"
+        'granularity': granularity,
+        'instrument': instrument,
+        'x_params': {
+            'interval': 1,
+            'valueFormatString': DATE_FORMAT
         },
-        "y_params": {
-            "includeZero": False,
-            "prefix": "$",
-            "title": "Prices"
+        'y_params': {
+            'includeZero': False,
+            'prefix': '$',
+            'title': 'Prices'
         },
-        "title": {
-            "text": title
+        'title': {
+            'text': title
         },
-        "candles": ''
+        'candles': ''
     }
     return chart_data
 
@@ -42,7 +44,8 @@ def main(input_file, instrument, granularity, title):
     candle_size = len(candle_data)
 
     max_candle_slice = 30000
-    if candle_size > max_candle_slice:
+    print(max_candle_slice, candle_size)
+    if candle_size < max_candle_slice:
         chart['candles'] = candle_data
         db.candle_data.insert(chart)
     else:
@@ -51,6 +54,11 @@ def main(input_file, instrument, granularity, title):
             start_slice = max_candle_slice * i
             end_slice = start_slice + max_candle_slice
             chart['candles'] = candle_data[start_slice:end_slice]
+            old_title = chart['title']['text']
+            chart['title']['text'] = old_title + '_' + str(i)
+            time.sleep(2)
+            chart['_id'] = ObjectId()
+            print('Start:', start_slice, 'End:', end_slice)
             db.candle_data.insert(chart)
 
 

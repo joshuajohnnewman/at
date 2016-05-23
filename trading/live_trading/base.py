@@ -22,47 +22,51 @@ class LiveTradingStrategy:
         self.broker = broker
 
     def tick(self):
-        try:
-            self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
-            self.logger.info('Current Portfolio {portfolio}'.format(portfolio=self.strategy.portfolio))
+        while True:
+            try:
+                self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
+                self.logger.info('Current Portfolio {portfolio}'.format(portfolio=self.strategy.portfolio))
 
-            order_responses = self.get_order_updates()
+                order_responses = self.get_order_updates()
 
-            if order_responses:
-                self.logger.info('Order Responses', data=order_responses)
-                self.strategy.update_portfolio(order_responses)
-                order_ids = order_responses.keys()
-                self.remove_recorded_orders(order_ids)
+                if order_responses:
+                    self.logger.info('Order Responses', data=order_responses)
+                    self.strategy.update_portfolio(order_responses)
+                    order_ids = order_responses.keys()
+                    self.remove_recorded_orders(order_ids)
 
-            market_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
-            self.strategy.analyze_data(market_data)
-            order_decision, market_order = self.strategy.make_decision()
+                historical_market_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
+                current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
+                self.strategy.analyze_data({
+                    'historical': historical_market_data,
+                    'current': current_market_data
+                })
+                order_decision, market_order = self.strategy.make_decision()
 
-            self.logger.info('Strategy Decision: {decision}'.format(decision=order_decision))
+                self.logger.info('Strategy Decision: {decision}'.format(decision=order_decision))
 
-            if order_decision is not ORDER_STAY:
-                self.log_market_order(order_decision, market_order)
-                order_response = self.broker.make_order(market_order)
-                self.logger.info('Order response {order}'.format(order=order_response))
-                trade_opened = order_response.get('tradeOpened')
-                if trade_opened:
-                    trade_id = trade_opened['id']
-                    self.strategy.update_portfolio({trade_id: order_response})
-                else:
-                    trade_id = order_response['id']
-                    self.orders[trade_id] = order_response
-                self.num_orders += 1
+                if order_decision is not ORDER_STAY:
+                    self.log_market_order(order_decision, market_order)
+                    order_response = self.broker.make_order(market_order)
+                    self.logger.info('Order response {order}'.format(order=order_response))
+                    trade_opened = order_response.get('tradeOpened')
+                    if trade_opened:
+                        trade_id = trade_opened['id']
+                        self.strategy.update_portfolio({trade_id: order_response})
+                    else:
+                        trade_id = order_response['id']
+                        self.orders[trade_id] = order_response
+                    self.num_orders += 1
 
-            time.sleep(self.interval)
-            self.ticks += 1
-            self.tick()
+                time.sleep(self.interval)
+                self.ticks += 1
 
-        except (KeyboardInterrupt, SystemExit) as e:
-            self.logger.error('Manually Stopped Live Trading', data=e)
-            self.shutdown(KeyboardInterruptMessage)
-        except LiveTradingException as e:
-            self.logger.error('Live Trading Error', data=e)
-            self.shutdown(e)
+            except (KeyboardInterrupt, SystemExit) as e:
+                self.logger.error('Manually Stopped Live Trading', data=e)
+                self.shutdown(KeyboardInterruptMessage)
+            except LiveTradingException as e:
+                self.logger.error('Live Trading Error', data=e)
+                self.shutdown(e)
 
     def get_order_updates(self):
         order_ids = self.orders.keys()

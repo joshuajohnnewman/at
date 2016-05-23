@@ -4,16 +4,20 @@ import math
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
+from trading.algorithms.constants import TREND_NEGATIVE, TREND_POSITIVE
+from trading.indicators.momentum_indicators import calc_average_directional_movement_index_rating
 from trading.classifier import RFClassifier
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, \
-    PRICE_ASK_HIGH, PRICE_ASK_LOW, PRICE_ASK_OPEN, VOLUME, PRICE_ASK
-from trading.data.transformations import normalize_price_data
+    PRICE_ASK_HIGH, PRICE_ASK_LOW, PRICE_ASK_OPEN, VOLUME
+from trading.data.transformations import normalize_price_data, normalize_current_price_data
 
 
 class PatternMatch(Strategy):
     name = 'Moving Average Crossover'
 
+    _classifier = None
     required_volume = 10
+    trend_interval = 30
 
     def __init__(self, config):
         self.target_pattern = config.get('target_pattern')
@@ -45,15 +49,22 @@ class PatternMatch(Strategy):
             pair_a['tradeable_currency'] = pair_a['initial_currency']
 
     def analyze_data(self, market_data):
-        asking_price = normalize_price_data(market_data, PRICE_ASK)
-        closing_candle_data = normalize_price_data(market_data, PRICE_ASK_CLOSE)
-        opening_candle_data = normalize_price_data(market_data, PRICE_ASK_OPEN)
-        high_candle_data = normalize_price_data(market_data, PRICE_ASK_HIGH)
-        low_candle_data = normalize_price_data(market_data, PRICE_ASK_LOW)
-        volume_candle_data = normalize_price_data(market_data, VOLUME)
+        current_market_data = market_data['current']
+        historical_market_data = market_data['historical']
+        historical_candle_data = historical_market_data['candles']
 
+        asking_price = normalize_current_price_data(current_market_data)
+
+        closing_candle_data = normalize_price_data(historical_candle_data, PRICE_ASK_CLOSE)
+        opening_candle_data = normalize_price_data(historical_candle_data, PRICE_ASK_OPEN)
+        high_candle_data = normalize_price_data(historical_candle_data, PRICE_ASK_HIGH)
+        low_candle_data = normalize_price_data(historical_candle_data, PRICE_ASK_LOW)
+        volume_candle_data = normalize_price_data(historical_candle_data, VOLUME)
+
+        trend_direction, trend_strength = self.calculate_trend(high_candle_data, low_candle_data, closing_candle_data)
         self.strategy_data['volume'] = volume_candle_data
-        self.strategy_data['trend'] = self.calculate_trend()
+        self.strategy_data['trend'] = trend_direction
+        self.strategy_data['trend_strength'] = trend_strength
         self.strategy_data['asking']  = asking_price
 
         X = {
@@ -80,9 +91,9 @@ class PatternMatch(Strategy):
         decision = SIDE_STAY
         order = None
 
-        if trend == 'positive' and volume > self.required_volume and pattern == self.target_pattern:
+        if trend == TREND_POSITIVE and volume > self.required_volume and pattern == self.target_pattern:
             order = self.make_order(asking_price, SIDE_BUY)
-        elif trend == 'negative' and volume > self.required_volume and pattern == self.target_pattern:
+        elif trend == TREND_NEGATIVE and volume > self.required_volume and pattern == self.target_pattern:
             order = self.make_order(asking_price, SIDE_SELL)
 
         return decision, order
@@ -136,9 +147,19 @@ class PatternMatch(Strategy):
         self.db.strategies.update(query, update, upsert=True)
         self.db.classifiers.update(classifier_query, serialized_classifier)
 
+    def calculate_trend(self, high, low, close):
+        trend_start_low = low[self.trend_interval]
+        trend_end_low = low[-1]
 
-    def calculate_trend(self):
-        pass
+        if trend_end_low > trend_start_low:
+            trend_direction = TREND_POSITIVE
+        else:
+            trend_direction = TREND_NEGATIVE
+
+        trend_strength = calc_average_directional_movement_index_rating(high=high, low=low, close=close,
+                                                                        interval=self.trend_interval)
+
+        return trend_direction, trend_strength
 
     @property
     def classifier(self):

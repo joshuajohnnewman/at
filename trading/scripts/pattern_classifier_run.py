@@ -1,30 +1,29 @@
-from trading.algorithms.jenetic_segmentation_oscillatory_heuristics import Josh
+from trading.algorithms.simple_pattern_matcher import PatternMatch
 from trading.broker.oanda import OandaBroker
 from trading.live_trading.base import LiveTradingStrategy
 from trading.algorithms.constants import INSTRUMENT_EUR_USD
 
 
 def main():
-    broker = OandaBroker()
+    classifier_id = '5743335b7f9b5ebdf9d84827'
 
+    broker = OandaBroker()
     pair_a =  {'name': 'usd', 'starting_currency': 1000, 'tradeable_currency': 1000}
     pair_b = {'name': 'eur', 'starting_currency': 0, 'tradeable_currency': 0}
-    strategy_id = '571d2ec21689011340cce43f'
-    instrument = INSTRUMENT_EUR_USD
 
-    config = {
+    instrument = INSTRUMENT_EUR_USD
+    classifier_config = {'classifier_id': classifier_id}
+
+    strategy_config = {
         'instrument': instrument,
         'pair_a': pair_a,
-        'pair_b': pair_b
+        'pair_b': pair_b,
+        'classifier_config': classifier_config
     }
 
-    id_config = {
-        'strategy_id': strategy_id
-    }
+    pattern_match_strategy = PatternMatch(strategy_config)
 
-    josh_strategy = Josh(id_config)
-
-    strategy = LiveTradingStrategy(josh_strategy, broker)
+    strategy = LiveTradingStrategy(pattern_match_strategy, broker)
     strategy.tick()
 
 
