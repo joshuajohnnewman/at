@@ -25,7 +25,8 @@ def initialize_strategy(strategy_config, account_information):
     base_pair['starting_units'] = base_pair_balance
     base_pair['tradeable_units'] = base_pair_balance
 
-    assert(base_pair_currency, base_pair['currency'])
+    print(base_pair_currency, base_pair['currency'])
+    assert(base_pair_currency.lower() == base_pair['currency'].lower())
 
     strategy = STRATEGIES[strategy_name](strategy_config)
 

@@ -1,5 +1,4 @@
 from collections import namedtuple
-from trading.broker import SIDE_SELL, SIDE_BUY
 from trading.util.log import Logger
 
 PrimaryPair = namedtuple('PrimaryPair', ('base', 'quote'))
@@ -43,31 +42,56 @@ class Portfolio:
         }
 
     def update(self, order_responses):
-        for order_id in order_responses:
-            order_response = order_responses[order_id]
+        closed = order_responses.get('closed', [])
+        opened = order_responses.get('opened', [])
+        price = order_responses['price']
 
-            self.logger.info('Updating Portfolio from order response {response}'.format(response=order_response))
+        self.update_open_positions(price, opened)
+        self.update_closed_positions(price, closed)
 
-            order = order_response['tradeOpened']
+        hypothetical_profit_total = (price * self.quote_pair.tradeable_units) + self.base_pair.tradeable_units
+
+        self.profit = hypothetical_profit_total
+
+    def update_open_positions(self, price, opened_orders):
+        for order in opened_orders:
+            self.logger.debug('Opened Order', data=order)
+            quote_units_bought = order['units']
+
+            trade_cost = quote_units_bought * price
+
+            self.logger.info('Updating portfolio for open position trade with old portfolio {portfolio}'
+                             .format(portfolio=self), data=order)
+
+            current_base_units = self.base_pair.tradeable_units
+            self.base_pair.tradeable_units = current_base_units - trade_cost
+            self.quote_pair.tradeable_units = quote_units_bought
+
+            self.logger.info('New Portfolio value {portfolio}'.format(portfolio=self), data=order)
+
+    def update_closed_positions(self, price, closed_orders):
+        for order in closed_orders:
             units = order['units']
-            side = order['side']
-            price = order_response['price']
+            self.logger.debug('Closed Order', data=order)
+
+            self.logger.info('Updating portfolio for closed position trade with old portfolio {portfolio}'
+                             .format(portfolio=self), data=order)
 
             total_traded = units * price
 
-            if side == SIDE_SELL:
-                current_base_units = self.base_pair.tradeable_units
-                current_quote_units = self.quote_pair.tradeable_units
-                self.quote_pair_tradeable_units = current_quote_units - total_traded
-                self.base_pair.tradeable_units = current_base_units + total_traded
+            current_base_units = self.base_pair.tradeable_units
+            current_quote_units = self.quote_pair.tradeable_units
+            self.quote_pair_tradeable_units = current_quote_units - total_traded
+            self.base_pair.tradeable_units = current_base_units + total_traded
 
-            elif side == SIDE_BUY:
-                current_base_units = self.base_pair.tradeable_units
-                current_quote_units = self.quote_pair.tradeable_units
-                self.base_pair.tradeable_units = current_base_units - total_traded
-                self.quote_pair.tradeable_units = current_quote_units + total_traded
+            self.logger.info('New Portfolio value {portfolio}'.format(portfolio=self), data=order)
 
-        self.profit = self.base_pair.tradeable_units - self.base_pair.starting_units
+    def update_account_portfolio_data(self, account_information):
+        current_account_balance = account_information['balance']
+
+        self.logger.debug('Broker balance {bbalance} vs portfolio balance {pbalance}'
+                          .format(bbalance=current_account_balance, pbalance=self.base_pair.tradeable_units))
+
 
     @property
     def logger(self):

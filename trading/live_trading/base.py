@@ -4,12 +4,15 @@ import time
 from trading.algorithms import initialize_strategy, ORDER_BUY, ORDER_SELL, ORDER_STAY
 from trading.broker import PRICE_ASK
 from trading.data.transformations import normalize_current_price_data
+from trading.live_trading.util import invested_map, normalize_portfolio_update
 from trading.live_trading.exceptions import LiveTradingException, KeyboardInterruptMessage, StrategyException
 from trading.util.log import Logger
 
 
 class LiveTradingStrategy:
     orders = {}
+    invested = False
+
     _logger = None
 
     def __init__(self, strategy_config, broker):
@@ -29,7 +32,10 @@ class LiveTradingStrategy:
         while True:
             try:
                 self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
+                account_information = self.broker.get_account_information()
+                self.strategy.portfolio.update_account_portfolio_data(account_information)
                 self.logger.info('Current Portfolio {portfolio}'.format(portfolio=self.strategy.portfolio))
+                self.logger.debug('Account Info', data=account_information)
 
                 order_responses = self.get_order_updates()
 
@@ -63,6 +69,10 @@ class LiveTradingStrategy:
                 self.logger.error('Live Trading Error', data=e)
                 self.shutdown(e)
                 break
+            except Exception as e:
+                self.logger.error('Uncaught Error', data=e)
+                self.shutdown(e)
+                break
 
     def get_order_updates(self):
         order_ids = self.orders.keys()
@@ -92,12 +102,17 @@ class LiveTradingStrategy:
     def shutdown(self, e):
         end_time = time.time()
 
-        current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
-        asking_price =  normalize_current_price_data(current_market_data, target_field=PRICE_ASK)
-        order_decision, sell_order = self.strategy.make_order(asking_price, decision=ORDER_SELL)
-        self.make_market_order(order_decision, sell_order)
+        if self.invested:
+            self.logger.info('Currently Invested, closing out all open positions')
+            current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
+            asking_price =  normalize_current_price_data(current_market_data, target_field=PRICE_ASK)
+            sell_order = self.strategy.make_order(asking_price, order_side=ORDER_SELL)
+            order_response = self.make_market_order(ORDER_SELL, sell_order)
+            self.update_orders(order_response)
+
         self.strategy.shutdown(self.start_time, end_time, self.ticks, self.num_orders, str(e))
         self.logger.info('Shut down live trading strategy successfully')
+        self.logger.info('Closing Portfolio', data=self.strategy.portfolio)
 
     def log_market_order(self, decision, market_order):
         now = datetime.datetime.now()
@@ -117,9 +132,11 @@ class LiveTradingStrategy:
 
     def make_market_order(self, order_decision, market_order):
         self.logger.info('Strategy Decision: {decision}'.format(decision=order_decision))
+        self.logger.info('Market Order {order}'.format(order=market_order))
 
         if order_decision in (ORDER_SELL, ORDER_BUY):
             order_response = self.broker.make_order(market_order)
+            self.invested = invested_map[order_decision]
             self.num_orders += 1
 
         elif order_decision == ORDER_STAY:
@@ -133,14 +150,21 @@ class LiveTradingStrategy:
 
     def update_orders(self, order_response):
         self.logger.info('Order response {order}'.format(order=order_response))
-        trade_opened = order_response.get('tradeOpened')
+        trades_opened = order_response.get('tradeOpened')
+        trades_closed = order_response.get('tradesClosed')
+        price = order_response.get('price')
 
-        if trade_opened:
-            trade_id = trade_opened['id']
-            self.strategy.update_portfolio({trade_id: order_response})
+        if not order_response:
+            self.logger.info('No Order Response')
+            return
+
+        elif trades_opened or trades_closed:
+            portfolio_update = normalize_portfolio_update({'opened': trades_opened, 'closed': trades_closed, 'price': price})
+            self.strategy.update_portfolio(portfolio_update)
+
         else:
-            trade_id = order_response['id']
-            self.orders[trade_id] = order_response
+            self.logger.debug('Unhandled order response')
+            raise LiveTradingException
 
     @property
     def logger(self):

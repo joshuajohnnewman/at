@@ -8,24 +8,21 @@ def main():
     classifier_id = '571bf11f16890198e1e0243d'
 
     broker = OandaBroker()
-    base_pair =  {'currency': 'usd', 'starting_units': 1000, 'tradeable_units': 1000}
-    quote_pair = {'currency': 'eur', 'starting_units': 0, 'tradeable_units': 0}
+    base_pair =  {'currency': 'usd'}
+    quote_pair = {'currency': 'eur'}
 
     instrument = INSTRUMENT_EUR_USD
     classifier_config = {'classifier_id': classifier_id}
 
     strategy_config = {
-        'stragegy_name': RandomStumps.name,
+        'strategy_name': RandomStumps.name,
         'instrument': instrument,
         'base_pair': base_pair,
         'quote_pair': quote_pair,
         'classifier_config': classifier_config
     }
 
-
-    random_stumps_strategy = RandomStumps(strategy_config)
-
-    strategy = LiveTradingStrategy(random_stumps_strategy, broker)
+    strategy = LiveTradingStrategy(strategy_config, broker)
     strategy.tick()
 
 

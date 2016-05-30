@@ -43,7 +43,7 @@ class PatternMatch(Strategy):
 
     def calc_units_to_sell(self, current_price):
         quote_pair_units = self.portfolio.quote_pair.tradeable_units
-        return quote_pair_units
+        return int(quote_pair_units)
 
     def allocate_tradeable_amount(self):
         base_pair = self.portfolio.base_pair
