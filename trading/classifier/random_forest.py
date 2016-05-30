@@ -62,6 +62,8 @@ class RFClassifier(Classifier):
     def prepare_prediction_data(self, strategy_data):
         X = []
         features = strategy_data.keys()
+        self.logger.debug('Features', data=features)
+        self.logger.debug('Strategy Data', data=strategy_data)
         data = []
         for feature in features:
             if 'price' in feature:

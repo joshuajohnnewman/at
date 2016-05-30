@@ -12,6 +12,10 @@ class OandaBroker(Broker, EndpointsMixin):
     _account_id = None
     _oanda = None
 
+    def get_account_information(self):
+        account_information = self.oanda.get_account(self.account_id)
+        return account_information
+
     def get_current_price_data(self, instrument):
         if not isinstance(instrument, list):
             instrument = [instrument]

@@ -5,17 +5,20 @@ from bson import ObjectId
 
 from trading.algorithms.base import Strategy
 from trading.algorithms.constants import TREND_NEGATIVE, TREND_POSITIVE
+from trading.indicators import INTERVAL_ONE_HUNDRED_CANDLES
 from trading.indicators.momentum_indicators import calc_average_directional_movement_index_rating
 from trading.classifier import RFClassifier
-from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, \
+from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK, PRICE_ASK_CLOSE, \
     PRICE_ASK_HIGH, PRICE_ASK_LOW, PRICE_ASK_OPEN, VOLUME
-from trading.data.transformations import normalize_price_data, normalize_current_price_data
+from trading.data.transformations import normalize_price_data, normalize_current_price_data, get_last_candle_data
 
 
 class PatternMatch(Strategy):
-    name = 'Moving Average Crossover'
+    name = 'PatternMatch'
 
     _classifier = None
+
+    data_window = INTERVAL_ONE_HUNDRED_CANDLES
     required_volume = 10
     trend_interval = 30
 
@@ -34,52 +37,56 @@ class PatternMatch(Strategy):
         self.invested = False
 
     def calc_units_to_buy(self, current_price):
-        pair_a_tradeable = self.portfolio.pair_a.tradeable_currency
-        num_units = math.floor(pair_a_tradeable / current_price)
+        base_pair_units = self.portfolio.base_pair.tradeable_units
+        num_units = math.floor(base_pair_units / current_price)
         return int(num_units)
 
     def calc_units_to_sell(self, current_price):
-        pair_b_tradeable = self.portfolio.pair_b.tradeable_currency
-        return pair_b_tradeable
+        quote_pair_units = self.portfolio.quote_pair.tradeable_units
+        return quote_pair_units
 
     def allocate_tradeable_amount(self):
-        pair_a = self.portfolio.pair_a
+        base_pair = self.portfolio.base_pair
         profit = self.portfolio.profit
         if profit > 0:
-            pair_a['tradeable_currency'] = pair_a['initial_currency']
+            base_pair['tradeable_units'] = base_pair['starting_units']
 
     def analyze_data(self, market_data):
         current_market_data = market_data['current']
         historical_market_data = market_data['historical']
         historical_candle_data = historical_market_data['candles']
 
-        asking_price = normalize_current_price_data(current_market_data)
+        asking_price = normalize_current_price_data(current_market_data, PRICE_ASK)
 
         closing_candle_data = normalize_price_data(historical_candle_data, PRICE_ASK_CLOSE)
-        opening_candle_data = normalize_price_data(historical_candle_data, PRICE_ASK_OPEN)
         high_candle_data = normalize_price_data(historical_candle_data, PRICE_ASK_HIGH)
         low_candle_data = normalize_price_data(historical_candle_data, PRICE_ASK_LOW)
-        volume_candle_data = normalize_price_data(historical_candle_data, VOLUME)
+
+        last_candle = get_last_candle_data(historical_candle_data)
+
+        current_low = last_candle[PRICE_ASK_LOW]
+        current_high = last_candle[PRICE_ASK_HIGH]
+        current_close = last_candle[PRICE_ASK_CLOSE]
+        current_open = last_candle[PRICE_ASK_OPEN]
+        current_volume = last_candle[VOLUME]
 
         trend_direction, trend_strength = self.calculate_trend(high_candle_data, low_candle_data, closing_candle_data)
-        self.strategy_data['volume'] = volume_candle_data
+        self.strategy_data['volume'] = current_volume
         self.strategy_data['trend'] = trend_direction
         self.strategy_data['trend_strength'] = trend_strength
         self.strategy_data['asking']  = asking_price
 
         X = {
-            'open': opening_candle_data,
-            'close': closing_candle_data,
-            'high': high_candle_data,
-            'low': low_candle_data
+            'open': current_open,
+            'close': current_close,
+            'high': current_high,
+            'low': current_low
         }
 
         market_prediction = self.classifier.predict(X, format_data=True, unwrap_prediction=True)
         pattern = market_prediction.decision
 
-
         self.strategy_data['pattern'] = pattern
-
         self.log_strategy_data()
 
     def make_decision(self):
@@ -100,7 +107,7 @@ class PatternMatch(Strategy):
 
     def make_order(self, asking_price, order_side=SIDE_BUY):
         trade_expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)
-        trade_expire = trade_expire.isoformat("T") + "Z"
+        trade_expire = trade_expire.isoformat('T') + 'Z'
 
         if order_side == SIDE_BUY:
             units = self.calc_units_to_buy(asking_price)
@@ -118,15 +125,15 @@ class PatternMatch(Strategy):
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
 
-        pair_a = self.portfolio.pair_a
-        pair_b = self.portfolio.pair_b
+        base_pair = self.portfolio.base_pair
+        quote_pair = self.portfolio.quote_pair
 
         config = {
             'instrument': self.portfolio.instrument,
-            'pair_a': {'name': pair_a.name, 'starting_currency': pair_a.starting_currency,
-                       'tradeable_currency': pair_a.tradeable_currency},
-            'pair_b': {'name': pair_b.name, 'starting_currency': pair_b.starting_currency,
-                       'tradeable_currency': pair_b.tradeable_currency}
+            'base_pair': {'currency': base_pair.currency, 'starting_units': base_pair.starting_units,
+                       'tradeable_units': base_pair.tradeable_units},
+            'quote_pair': {'currency': quote_pair.currency, 'starting_units': quote_pair.starting_units,
+                       'tradeable_units': quote_pair.tradeable_units}
         }
 
         strategy = {
@@ -138,14 +145,15 @@ class PatternMatch(Strategy):
             'instrument': self.instrument,
         }
 
-        query = {'_id': ObjectId(self.strategy_id)}
-        update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
-
-        classifier_query = {'_id': ObjectId(self.classifier.classifier_id)}
+        strategy_query = {'_id': ObjectId(self.strategy_id)}
+        strategy_update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
         serialized_classifier = self.classifier.serialize()
 
-        self.db.strategies.update(query, update, upsert=True)
-        self.db.classifiers.update(classifier_query, serialized_classifier)
+        classifier_query = {'_id': ObjectId(self.classifier.classifier_id)}
+        classifier_update = {'$set': {'classifier': serialized_classifier}}
+
+        self.db.strategires.update(strategy_query, strategy_update)
+        self.db.classifiers.update(classifier_query, classifier_update)
 
     def calculate_trend(self, high, low, close):
         trend_start_low = low[self.trend_interval]

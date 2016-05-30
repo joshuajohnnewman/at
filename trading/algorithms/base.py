@@ -5,7 +5,7 @@ from bson import ObjectId
 
 from trading.algorithms.portfolio import Portfolio
 from trading.db import get_database
-from trading.indicators import INTERVAL_FORTY_DAYS
+from trading.indicators import INTERVAL_FORTY_CANDLES
 from trading.util.log import Logger
 
 
@@ -17,17 +17,17 @@ class Strategy(object):
 
     interval = 10
     strategy_data = {}
+    data_window = INTERVAL_FORTY_CANDLES
 
     name = 'Base Strategy'
 
-    def __init__(self, config):
-        instrument = config['instrument']
-        pair_a = config['pair_a']
-        pair_b = config['pair_b']
+    def __init__(self, strategy_config):
+        instrument = strategy_config['instrument']
+        base_pair = strategy_config['base_pair']
+        quote_pair = strategy_config['quote_pair']
 
-        self.data_window = INTERVAL_FORTY_DAYS
         self.instrument = instrument
-        self.portfolio = Portfolio(instrument, pair_a, pair_b)
+        self.portfolio = Portfolio(instrument, base_pair, quote_pair)
 
         self.logger.info('Starting Portfolio', data=self.portfolio)
 

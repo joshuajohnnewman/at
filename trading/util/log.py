@@ -2,7 +2,7 @@ import sys, traceback
 
 
 class Logger:
-    logging_message = '[{level}] message: {message} data: {data}'
+    logging_message = '[{level}] {message} {data}'
     logging_message_no_data = '[{level}] message: {message}'
 
     def info(self, message, data=''):

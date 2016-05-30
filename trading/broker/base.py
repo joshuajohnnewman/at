@@ -7,6 +7,10 @@ class Broker(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def get_account_information(self):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_order(self, order_id):
         raise NotImplementedError
 

@@ -8,22 +8,21 @@ def main():
     classifier_id = '5743335b7f9b5ebdf9d84827'
 
     broker = OandaBroker()
-    pair_a =  {'name': 'usd', 'starting_currency': 1000, 'tradeable_currency': 1000}
-    pair_b = {'name': 'eur', 'starting_currency': 0, 'tradeable_currency': 0}
+    base_pair =  {'currency': 'usd'}
+    quote_pair = {'currency': 'eur'}
 
     instrument = INSTRUMENT_EUR_USD
     classifier_config = {'classifier_id': classifier_id}
 
     strategy_config = {
+        'strategy_name': PatternMatch.name,
         'instrument': instrument,
-        'pair_a': pair_a,
-        'pair_b': pair_b,
+        'base_pair': base_pair,
+        'quote_pair': quote_pair,
         'classifier_config': classifier_config
     }
 
-    pattern_match_strategy = PatternMatch(strategy_config)
-
-    strategy = LiveTradingStrategy(pattern_match_strategy, broker)
+    strategy = LiveTradingStrategy(strategy_config, broker)
     strategy.tick()
 
 

@@ -8,16 +8,17 @@ def main():
     classifier_id = '571bf11f16890198e1e0243d'
 
     broker = OandaBroker()
-    pair_a =  {'name': 'usd', 'starting_currency': 1000, 'tradeable_currency': 1000}
-    pair_b = {'name': 'eur', 'starting_currency': 0, 'tradeable_currency': 0}
+    base_pair =  {'currency': 'usd', 'starting_units': 1000, 'tradeable_units': 1000}
+    quote_pair = {'currency': 'eur', 'starting_units': 0, 'tradeable_units': 0}
 
     instrument = INSTRUMENT_EUR_USD
     classifier_config = {'classifier_id': classifier_id}
 
     strategy_config = {
+        'stragegy_name': RandomStumps.name,
         'instrument': instrument,
-        'pair_a': pair_a,
-        'pair_b': pair_b,
+        'base_pair': base_pair,
+        'quote_pair': quote_pair,
         'classifier_config': classifier_config
     }
 

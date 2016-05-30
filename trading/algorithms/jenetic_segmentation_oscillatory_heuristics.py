@@ -6,11 +6,11 @@ from decimal import Decimal
 
 from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, \
-    PRICE_ASK_LOW
+    PRICE_ASK_LOW, PRICE_ASK
 from trading.data.transformations import normalize_price_data, normalize_current_price_data
 from trading.indicators.price_transformation import calc_standard_deviation
 from trading.indicators.overlap_studies import calc_moving_average
-from trading.indicators import calc_chandalier_exits, INTERVAL_FORTY_DAYS
+from trading.indicators import calc_chandalier_exits, INTERVAL_FORTY_CANDLES
 
 
 class Josh(Strategy):
@@ -32,45 +32,42 @@ class Josh(Strategy):
         self.invested = False
 
     def calc_units_to_buy(self, current_price):
-        pair_a_tradeable = self.portfolio.pair_a.tradeable_currency
-        num_units = math.floor(pair_a_tradeable / current_price)
+        base_pair_tradeable_units = self.portfolio.base_pair.tradeable_units
+        num_units = math.floor(base_pair_tradeable_units / current_price)
         return int(num_units)
 
     def calc_units_to_sell(self, current_price):
-        pair_b_tradeable = self.portfolio.pair_b.tradeable_currency
-        return pair_b_tradeable
+        quote_pair_tradeable_units = self.portfolio.quote_pair.tradeable_units
+        return quote_pair_tradeable_units
 
     def allocate_tradeable_amount(self):
-        pair_a = self.portfolio.pair_a
+        base_pair = self.portfolio.base_pair
         profit = self.portfolio.profit
 
         if profit > 0:
-            pair_a.tradeable_currency = pair_a.starting_currency
+            base_pair.tradeable_currency = base_pair.starting_currency
 
     def analyze_data(self, market_data):
         current_market_data = market_data['current']
         historical_market_data = market_data['historical']
 
         historical_candle_data = historical_market_data['candles']
-        current_price_data = normalize_current_price_data(current_market_data)
-
-        self.logger.debug(message='Historical Candle data', data=historical_candle_data)
-        self.logger.debug(message='Current Market Data', data=current_price_data)
+        asking_price = normalize_current_price_data(current_market_data, PRICE_ASK)
 
         closing_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_CLOSE)
         high_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_HIGH)
         low_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_LOW)
 
-        std = Decimal(calc_standard_deviation(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
+        std = Decimal(calc_standard_deviation(closing_market_data, min(INTERVAL_FORTY_CANDLES, len(market_data))))
 
         # Construct the upper and lower Bollinger Bands
-        ma = Decimal(calc_moving_average(closing_market_data, min(INTERVAL_FORTY_DAYS, len(market_data))))
+        ma = Decimal(calc_moving_average(closing_market_data, min(INTERVAL_FORTY_CANDLES, len(market_data))))
         upper = ma + (Decimal(2) * std)
         lower = ma - (Decimal(2) * std)
 
         long_exit, short_exit = calc_chandalier_exits(closing_market_data, high_market_data, low_market_data)
 
-        self.strategy_data['asking_price'] = current_price_data['ask']
+        self.strategy_data['asking_price'] = asking_price
         self.strategy_data['long_candle_exit'] = long_exit
         self.strategy_data['short_candle_exit'] = short_exit
         self.strategy_data['lower_bound_ma'] = lower
@@ -113,7 +110,7 @@ class Josh(Strategy):
 
     def make_order(self, asking_price, order_side=SIDE_BUY):
         trade_expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)
-        trade_expire = trade_expire.isoformat("T") + "Z"
+        trade_expire = trade_expire.isoformat('T') + 'Z'
 
         if order_side == SIDE_BUY:
             units = self.calc_units_to_buy(asking_price)
@@ -131,16 +128,16 @@ class Josh(Strategy):
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
 
-        pair_a = self.portfolio.pair_a
-        pair_b = self.portfolio.pair_b
+        base_pair = self.portfolio.base_pair
+        quote_pair = self.portfolio.quote_pair
 
         config = {
             'instrument': self.portfolio.instrument,
-            'pair_a': {'name': pair_a.name, 'starting_currency': pair_a.starting_currency,
-                       'tradeable_currency': pair_a.tradeable_currency},
+            'base_pair': {'currency': base_pair.currency, 'starting_units': base_pair.starting_units,
+                       'tradeable_units': base_pair.tradeable_units},
 
-            'pair_b': {'name': pair_b.name, 'starting_currency': pair_b.starting_currency,
-                       'tradeable_currency': pair_b.tradeable_currency}
+            'quote_pair': {'currency': quote_pair.currency, 'starting_currency': quote_pair.starting_units,
+                       'tradeable_units': quote_pair.tradeable_units}
         }
 
         strategy = {
