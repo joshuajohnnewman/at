@@ -1,15 +1,15 @@
 import datetime
 import math
-
 from decimal import Decimal
+
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK
 from trading.classifier.random_forest import RFClassifier
-from trading.data.transformations import normalize_price_data, normalize_current_price_data
 from trading.indicators import INTERVAL_TEN_CANDLES
 from trading.indicators.overlap_studies import calc_moving_average
+from trading.util.transformations import normalize_price_data, normalize_current_price_data
 
 
 class RandomStumps(Strategy):
@@ -134,10 +134,6 @@ class RandomStumps(Strategy):
         self.db.strategies.update(query, update, upsert=True)
         self.db.classifiers.update(classifier_query, classifier_update)
 
-    @staticmethod
-    def _normalize_price_data(price_data, target_field='ask'):
-        prices = [candle_data[target_field] for candle_data in price_data]
-        return prices
 
     @property
     def classifier(self):

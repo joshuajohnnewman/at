@@ -8,11 +8,12 @@ def main():
     broker = OandaBroker()
     strategy_id = '571d2ec21689011340cce43f'
 
-    base_pair =  {'currency': 'usd', 'starting_units': 1000, 'tradeable_units': 1000}
-    quote_pair = {'currency': 'eur', 'starting_units': 0, 'tradeable_units': 0}
+    base_pair =  {'currency': 'usd'}
+    quote_pair = {'currency': 'eur'}
     instrument = INSTRUMENT_EUR_USD
 
     config = {
+        'strategy_name': Josh.name,
         'instrument': instrument,
         'base_pair': base_pair,
         'quote_pair': quote_pair
@@ -22,9 +23,7 @@ def main():
         'strategy_id': strategy_id
     }
 
-    josh_strategy = Josh(config)
-
-    strategy = LiveTradingStrategy(josh_strategy, broker)
+    strategy = LiveTradingStrategy(config, broker)
     strategy.tick()
 
 

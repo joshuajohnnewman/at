@@ -3,7 +3,7 @@ import os
 from oandapy.oandapy import EndpointsMixin
 
 from trading.broker.base import Broker
-from trading.broker.oanda_constants import GRANULARITY_DAY, COUNT_FORTY
+from trading.broker.constants import GRANULARITY_DAY, COUNT_FORTY
 
 
 class OandaBroker(Broker, EndpointsMixin):

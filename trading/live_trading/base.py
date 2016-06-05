@@ -3,10 +3,10 @@ import time
 
 from trading.algorithms import initialize_strategy, ORDER_BUY, ORDER_SELL, ORDER_STAY
 from trading.broker import PRICE_ASK
-from trading.data.transformations import normalize_current_price_data
-from trading.live_trading.util import invested_map, normalize_portfolio_update
 from trading.live_trading.exceptions import LiveTradingException, KeyboardInterruptMessage, StrategyException
+from trading.live_trading.util import invested_map, normalize_portfolio_update
 from trading.util.log import Logger
+from trading.util.transformations import normalize_current_price_data
 
 
 class LiveTradingStrategy:
@@ -45,7 +45,9 @@ class LiveTradingStrategy:
                     order_ids = order_responses.keys()
                     self.remove_recorded_orders(order_ids)
 
-                historical_market_data = self.broker.get_historical_price_data(self.instrument, self.strategy.data_window)
+                historical_market_data = self.broker.get_historical_price_data(self.instrument,
+                                                                               self.strategy.data_window, granularity=self.strategy.granularity)
+
                 current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
 
                 self.strategy.analyze_data({

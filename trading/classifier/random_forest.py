@@ -3,8 +3,8 @@ import pickle as pkl
 from bson import ObjectId
 from sklearn import ensemble
 
-from trading.classifier.base import Classifier, MarketPrediction, predictions_map
-from trading.trading_constants import STRATEGY_DECISION
+from trading.classifier.base import Classifier, MarketPrediction
+from trading.classifier.constants import STRATEGY_DECISION
 
 
 class RFClassifier(Classifier):

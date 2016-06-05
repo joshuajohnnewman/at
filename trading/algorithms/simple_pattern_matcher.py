@@ -5,12 +5,13 @@ from bson import ObjectId
 
 from trading.algorithms.base import Strategy
 from trading.algorithms.constants import TREND_NEGATIVE, TREND_POSITIVE
-from trading.indicators import INTERVAL_ONE_HUNDRED_CANDLES
-from trading.indicators.momentum_indicators import calc_average_directional_movement_index_rating
-from trading.classifier import RFClassifier
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK, PRICE_ASK_CLOSE, \
     PRICE_ASK_HIGH, PRICE_ASK_LOW, PRICE_ASK_OPEN, VOLUME
-from trading.data.transformations import normalize_price_data, normalize_current_price_data, get_last_candle_data
+from trading.broker.constants import GRANULARITY_TEN_MINUTE
+from trading.classifier import RFClassifier
+from trading.indicators import INTERVAL_ONE_HUNDRED_CANDLES
+from trading.indicators.momentum_indicators import calc_average_directional_movement_index_rating
+from trading.util.transformations import normalize_price_data, normalize_current_price_data, get_last_candle_data
 
 
 class PatternMatch(Strategy):
@@ -19,11 +20,11 @@ class PatternMatch(Strategy):
     _classifier = None
 
     data_window = INTERVAL_ONE_HUNDRED_CANDLES
+    granularity = GRANULARITY_TEN_MINUTE
     required_volume = 10
     trend_interval = 30
 
     def __init__(self, config):
-        self.target_pattern = config.get('target_pattern')
         strategy_id = config.get('strategy_id')
 
         if strategy_id is None:
@@ -85,7 +86,7 @@ class PatternMatch(Strategy):
 
         market_prediction = self.classifier.predict(X, format_data=True, unwrap_prediction=True)
         pattern = market_prediction.decision
-
+        self.logger.info('Classifier Decision {prediction}'.format(prediction=market_prediction))
         self.strategy_data['pattern'] = pattern
         self.log_strategy_data()
 
@@ -98,10 +99,12 @@ class PatternMatch(Strategy):
         decision = SIDE_STAY
         order = None
 
-        if trend == TREND_POSITIVE and volume > self.required_volume and pattern == self.target_pattern:
+        if trend == TREND_POSITIVE and volume > self.required_volume and pattern == SIDE_BUY:
             order = self.make_order(asking_price, SIDE_BUY)
-        elif trend == TREND_NEGATIVE and volume > self.required_volume and pattern == self.target_pattern:
+            decision = SIDE_BUY
+        elif trend == TREND_NEGATIVE and volume > self.required_volume and pattern == SIDE_SELL:
             order = self.make_order(asking_price, SIDE_SELL)
+            decision = SIDE_STAY
 
         return decision, order
 

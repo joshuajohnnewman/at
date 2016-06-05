@@ -1,14 +1,14 @@
 import datetime
 import math
+from decimal import Decimal
 
 from bson import ObjectId
-from decimal import Decimal
 
 from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE
-from trading.data.transformations import normalize_price_data
 from trading.indicators import INTERVAL_TEN_CANDLES, INTERVAL_TWENTY_CANDLES
 from trading.indicators.overlap_studies import calc_moving_average
+from trading.util.transformations import normalize_price_data
 
 
 class MAC(Strategy):

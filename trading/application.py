@@ -45,7 +45,6 @@ api.add_resource(Strategies, '/strategies')
 CORS(application)
 
 
-
 @application.route('/status')
 def status():
     return jsonify(ok()[0])

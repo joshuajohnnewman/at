@@ -5,7 +5,7 @@ from trading.algorithms.constants import INSTRUMENT_EUR_USD
 
 
 def main():
-    classifier_id = '5743335b7f9b5ebdf9d84827'
+    classifier_id = '574db8431689015f6096544c'
 
     broker = OandaBroker()
     base_pair =  {'currency': 'usd'}

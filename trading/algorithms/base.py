@@ -4,6 +4,7 @@ from abc import abstractmethod, ABCMeta
 from bson import ObjectId
 
 from trading.algorithms.portfolio import Portfolio
+from trading.broker.constants import GRANULARITY_HOUR
 from trading.db import get_database
 from trading.indicators import INTERVAL_FORTY_CANDLES
 from trading.util.log import Logger
@@ -15,9 +16,10 @@ class Strategy(object):
     _db = None
     _logger = None
 
-    interval = 10
+    interval = 600
     strategy_data = {}
     data_window = INTERVAL_FORTY_CANDLES
+    granularity = GRANULARITY_HOUR
 
     name = 'Base Strategy'
 

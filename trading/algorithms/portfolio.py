@@ -92,7 +92,6 @@ class Portfolio:
         self.logger.debug('Broker balance {bbalance} vs portfolio balance {pbalance}'
                           .format(bbalance=current_account_balance, pbalance=self.base_pair.tradeable_units))
 
-
     @property
     def logger(self):
         if self._logger is None:
