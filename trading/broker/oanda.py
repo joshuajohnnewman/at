@@ -3,7 +3,7 @@ import os
 from oandapy.oandapy import EndpointsMixin
 
 from trading.broker.base import Broker
-from trading.broker.oanda_constants import GRANULARITY_DAY, COUNT_FORTY
+from trading.broker.constants import GRANULARITY_DAY, COUNT_FORTY
 
 
 class OandaBroker(Broker, EndpointsMixin):
@@ -11,6 +11,10 @@ class OandaBroker(Broker, EndpointsMixin):
 
     _account_id = None
     _oanda = None
+
+    def get_account_information(self):
+        account_information = self.oanda.get_account(self.account_id)
+        return account_information
 
     def get_current_price_data(self, instrument):
         if not isinstance(instrument, list):

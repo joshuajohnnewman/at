@@ -1,14 +1,14 @@
 import datetime
 import math
+from decimal import Decimal
 
 from bson import ObjectId
-from decimal import Decimal
 
 from trading.algorithms.base import Strategy
 from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE
-from trading.data.transformations import normalize_price_data
-from trading.indicators import INTERVAL_TEN_DAYS, INTERVAL_TWENTY_DAYS
+from trading.indicators import INTERVAL_TEN_CANDLES, INTERVAL_TWENTY_CANDLES
 from trading.indicators.overlap_studies import calc_moving_average
+from trading.util.transformations import normalize_price_data
 
 
 class MAC(Strategy):
@@ -47,8 +47,8 @@ class MAC(Strategy):
         closing_market_data = normalize_price_data(market_data, PRICE_ASK_CLOSE)
 
         # Construct the upper and lower Bollinger Bands
-        short_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TEN_DAYS))
-        long_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TWENTY_DAYS))
+        short_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TEN_CANDLES))
+        long_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TWENTY_CANDLES))
 
         self.strategy_data['asking_price'] = closing_market_data[-1]
         self.strategy_data['short_term_ma'] = short_ma

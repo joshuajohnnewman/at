@@ -3,8 +3,8 @@ import pickle as pkl
 from bson import ObjectId
 from sklearn import ensemble
 
-from trading.classifier.base import Classifier, MarketPrediction, predictions_map
-from trading.trading_constants import STRATEGY_DECISION
+from trading.classifier.base import Classifier, MarketPrediction
+from trading.classifier.constants import STRATEGY_DECISION
 
 
 class RFClassifier(Classifier):
@@ -62,6 +62,8 @@ class RFClassifier(Classifier):
     def prepare_prediction_data(self, strategy_data):
         X = []
         features = strategy_data.keys()
+        self.logger.debug('Features', data=features)
+        self.logger.debug('Strategy Data', data=strategy_data)
         data = []
         for feature in features:
             if 'price' in feature:

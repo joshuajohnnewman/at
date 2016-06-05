@@ -1,5 +1,4 @@
 # This is the main file that defines all necessary dependencies
-requests==2.9.1
 aniso8601==1.1.0
 appnope==0.1.0
 automated-trading==0.0.1

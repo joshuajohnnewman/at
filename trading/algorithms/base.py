@@ -3,10 +3,10 @@ import time
 from abc import abstractmethod, ABCMeta
 from bson import ObjectId
 
-from trading.algorithms.constants import INTERVAL_ONE_HOUR
 from trading.algorithms.portfolio import Portfolio
+from trading.broker.constants import GRANULARITY_HOUR
 from trading.db import get_database
-from trading.indicators import INTERVAL_FORTY_DAYS
+from trading.indicators import INTERVAL_FORTY_CANDLES
 from trading.util.log import Logger
 
 
@@ -16,19 +16,20 @@ class Strategy(object):
     _db = None
     _logger = None
 
-    interval = 10
+    interval = 600
     strategy_data = {}
+    data_window = INTERVAL_FORTY_CANDLES
+    granularity = GRANULARITY_HOUR
 
     name = 'Base Strategy'
 
-    def __init__(self, config):
-        instrument = config['instrument']
-        pair_a = config['pair_a']
-        pair_b = config['pair_b']
+    def __init__(self, strategy_config):
+        instrument = strategy_config['instrument']
+        base_pair = strategy_config['base_pair']
+        quote_pair = strategy_config['quote_pair']
 
-        self.data_window = INTERVAL_FORTY_DAYS
         self.instrument = instrument
-        self.portfolio = Portfolio(instrument, pair_a, pair_b)
+        self.portfolio = Portfolio(instrument, base_pair, quote_pair)
 
         self.logger.info('Starting Portfolio', data=self.portfolio)
 
@@ -59,8 +60,8 @@ class Strategy(object):
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         self.logger.info('Shutdown Strategy')
 
-    def update_portfolio(self, order_response):
-        self.portfolio.update(order_response)
+    def update_portfolio(self, order_responses):
+        self.portfolio.update(order_responses)
 
     def log_strategy_data(self):
         self.logger.info('Strategy Indicator Data:')
