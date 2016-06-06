@@ -1,9 +1,9 @@
 import time
-
 from abc import abstractmethod, ABCMeta
+
 from bson import ObjectId
 
-from trading.algorithms.portfolio import Portfolio
+from trading.account.portfolio import Portfolio
 from trading.broker.constants import GRANULARITY_HOUR
 from trading.db import get_database
 from trading.indicators import INTERVAL_FORTY_CANDLES

@@ -9,7 +9,7 @@ from trading.classifier.constants import STRATEGY_DECISION
 
 class RFClassifier(Classifier):
 
-    NUM_ESTIMATORS = 10
+    num_estimators = 10
 
     _training_data = None
 
@@ -18,7 +18,7 @@ class RFClassifier(Classifier):
 
         if classifier_id is None:
             classifier_id = ObjectId()
-            self.classifier = ensemble.RandomForestClassifier(n_estimators=self.NUM_ESTIMATORS)
+            self.classifier = ensemble.RandomForestClassifier(n_estimators=self.num_estimators)
         else:
             self.classifier = self.load(classifier_id)
 
