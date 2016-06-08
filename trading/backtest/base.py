@@ -9,7 +9,7 @@ from trading.util.log import Logger
 from trading.util.transformations import normalize_current_price_data
 
 
-class LiveTradingStrategy:
+class BacktestTradingStrategy:
     orders = {}
     invested = False
 
@@ -18,6 +18,7 @@ class LiveTradingStrategy:
     def __init__(self, strategy_config, broker, backtest_count):
         self.ticks = 0
         self.num_orders = 0
+        self.backtest_count = backtest_count
         self.start_time = time.time()
 
         self.broker = broker
@@ -30,7 +31,7 @@ class LiveTradingStrategy:
         broker.get_backtest_price_data(self.instrument, backtest_count, self.strategy.granularity)
 
     def tick(self):
-        while True:
+        while self.ticks < self.backtest_count:
             try:
                 self.logger.info('Tick Number: {tick}'.format(tick=self.ticks))
                 account_information = self.broker.get_account_information()
@@ -77,6 +78,11 @@ class LiveTradingStrategy:
                 self.logger.error('Uncaught Error', data=e)
                 self.shutdown(e)
                 break
+
+        self.shutdown('End Backtest')
+        self.logger.info('Trading Results: Account {account}'.format(account=self.broker.account))
+        self.logger.info('Trading Results: Portfolio {portfolio}'.format(portfolio=self.strategy.portfolio))
+        self.logger.info('Trading Results: Num Orders {num_orders}'.format(num_orders=self.num_orders))
 
     def get_order_updates(self):
         order_ids = self.orders.keys()

@@ -47,13 +47,11 @@ class Josh(Strategy):
         profit = self.portfolio.profit
 
         if profit > 0:
-            base_pair.tradeable_currency = base_pair.starting_currency
+            base_pair.tradeable_units = base_pair.starting_units
 
     def analyze_data(self, market_data):
         current_market_data = market_data['current']
         historical_market_data = market_data['historical']
-
-        self.logger.error('Historic', historical_market_data)
 
         historical_candle_data = historical_market_data['candles']
         asking_price = normalize_current_price_data(current_market_data, PRICE_ASK)
