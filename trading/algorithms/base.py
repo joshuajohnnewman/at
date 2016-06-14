@@ -76,9 +76,9 @@ class Strategy(object):
         config = strategy_data['config']
         return config
 
-    @staticmethod
-    def make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause):
+    def make_trading_session_info(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         return {
+            'profit': self.portfolio.profit,
             'session_id': time.time(),
             'started_at': started_at,
             'ended_at': ended_at,

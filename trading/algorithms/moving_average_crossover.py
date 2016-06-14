@@ -84,6 +84,9 @@ class MAC(Strategy):
             decision = SIDE_SELL
             order = self.make_order(asking_price, decision)
 
+        else:
+            return decision, None
+
         if order.units <=0:
             decision = SIDE_STAY
             order = None
@@ -124,6 +127,7 @@ class MAC(Strategy):
         }
 
         strategy = {
+            'name': self.name,
             'config': config,
             'profit': self.portfolio.profit,
             'data_window': self.data_window,

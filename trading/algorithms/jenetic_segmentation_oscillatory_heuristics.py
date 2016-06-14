@@ -143,6 +143,7 @@ class Josh(Strategy):
         }
 
         strategy = {
+            'name': self.name,
             'config': config,
             'profit': self.portfolio.profit,
             'data_window': self.data_window,
