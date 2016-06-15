@@ -10,7 +10,7 @@ from trading.backtest.account import Account
 
 
 class BacktestBroker(Broker, EndpointsMixin):
-    name = 'Backtest'
+    name = 'Backtest_OANDA'
 
     _account_id = None
     _oanda = None
