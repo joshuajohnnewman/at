@@ -58,7 +58,8 @@ class BacktestDataBroker(Broker):
             'granularity': granularity
         }
 
-        self._historic_data['candles'].append(candles[i])
+        for i in range(0, count):
+            self._historic_data['candles'].append(candles[i])
 
     def get_order(self, order_id):
         return {}
