@@ -1,9 +1,11 @@
+import datetime
 import time
-from abc import abstractmethod, ABCMeta
 
+from abc import abstractmethod, ABCMeta
 from bson import ObjectId
 
 from trading.account.portfolio import Portfolio
+from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY
 from trading.broker.constants import GRANULARITY_HOUR
 from trading.db import get_database
 from trading.indicators import INTERVAL_FORTY_CANDLES
@@ -21,7 +23,7 @@ class Strategy(object):
     data_window = INTERVAL_FORTY_CANDLES
     granularity = GRANULARITY_HOUR
 
-    name = 'Base Strategy'
+    name = 'Base_Strategy'
 
     def __init__(self, strategy_config):
         instrument = strategy_config['instrument']
@@ -53,12 +55,39 @@ class Strategy(object):
     def allocate_tradeable_amount(self):
         raise NotImplementedError
 
-    @abstractmethod
-    def make_order(self, current_price):
-        raise NotImplementedError
-
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
-        self.logger.info('Shutdown Strategy')
+        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
+
+        base_pair = self.portfolio.base_pair
+        quote_pair = self.portfolio.quote_pair
+
+        config = {
+            'instrument': self.portfolio.instrument,
+            'base_pair': {'currency': base_pair.currency, 'starting_units': base_pair.starting_units,
+                          'tradeable_units': base_pair.tradeable_units},
+            'quote_pair': {'currency': quote_pair.currency, 'starting_units': quote_pair.starting_units,
+                           'tradeable_units': quote_pair.tradeable_units}
+        }
+
+        strategy = {
+            'name': self.name,
+            'config': config,
+            'profit': self.portfolio.profit,
+            'data_window': self.data_window,
+            'interval': self.interval,
+            'indicators': self.strategy_data.keys(),
+            'instrument': self.instrument,
+        }
+
+        strategy_query = {'_id': ObjectId(self.strategy_id)}
+        strategy_update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
+        serialized_classifier = self.classifier.serialize()
+
+        classifier_query = {'_id': ObjectId(self.classifier.classifier_id)}
+        classifier_update = {'$set': {'classifier': serialized_classifier}}
+
+        self.db.strategires.update(strategy_query, strategy_update)
+        self.db.classifiers.update(classifier_query, classifier_update)
 
     def update_portfolio(self, order_responses):
         self.portfolio.update(order_responses)
@@ -75,6 +104,25 @@ class Strategy(object):
         strategy_data = strategy['strategy_data']
         config = strategy_data['config']
         return config
+
+    def make_order(self, asking_price, order_side=SIDE_BUY):
+        trade_expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+        trade_expire = trade_expire.isoformat("T") + "Z"
+
+        if order_side == SIDE_BUY:
+            units = self.calc_units_to_buy(asking_price)
+        else:
+            units = self.calc_units_to_sell(asking_price)
+
+        self.logger.info('Calculated units {units} and side {side}'.format(units=units, side=order_side))
+
+        instrument = self.portfolio.instrument
+        side = order_side
+        order_type = ORDER_MARKET
+        price = asking_price
+        expiry = trade_expire
+
+        return MarketOrder(instrument, units, side, order_type, price, expiry)
 
     def make_trading_session_info(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         return {

@@ -1,12 +1,11 @@
-import datetime
 import math
 
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
 from trading.algorithms.constants import TREND_NEGATIVE, TREND_POSITIVE
-from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK, PRICE_ASK_CLOSE, \
-    PRICE_ASK_HIGH, PRICE_ASK_LOW, PRICE_ASK_OPEN, VOLUME
+from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, PRICE_ASK_LOW, \
+    PRICE_ASK_OPEN, VOLUME
 from trading.broker.constants import GRANULARITY_TEN_MINUTE
 from trading.classifier import RFClassifier
 from trading.indicators import INTERVAL_ONE_HUNDRED_CANDLES
@@ -107,23 +106,6 @@ class PatternMatch(Strategy):
             decision = SIDE_STAY
 
         return decision, order
-
-    def make_order(self, asking_price, order_side=SIDE_BUY):
-        trade_expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)
-        trade_expire = trade_expire.isoformat('T') + 'Z'
-
-        if order_side == SIDE_BUY:
-            units = self.calc_units_to_buy(asking_price)
-        else:
-            units = self.calc_units_to_sell(asking_price)
-
-        instrument = self.portfolio.instrument
-        side = order_side
-        order_type = ORDER_MARKET
-        price = asking_price
-        expiry = trade_expire
-
-        return MarketOrder(instrument, units, side, order_type, price, expiry)
 
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
         session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)

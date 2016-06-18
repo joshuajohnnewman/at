@@ -4,7 +4,7 @@ from flask_restful import Resource
 
 from trading.api import ok
 from trading.db import get_database, transform_son
-from trading.live_trading import initialize_live_strategy
+from trading.live import initialize_live_strategy
 
 
 class LiveStrategies(Resource):

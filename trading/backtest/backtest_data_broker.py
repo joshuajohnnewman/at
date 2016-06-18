@@ -6,7 +6,8 @@ from trading.broker.base import Broker
 from trading.broker.constants import GRANULARITY_DAY, COUNT_FORTY
 from trading.backtest.account import Account, SIDE_BUY, SIDE_SELL
 from trading.backtest.util import load_json_file
-from trading.live_trading.exceptions import LiveTradingException
+from trading.live.exceptions import LiveTradingException
+
 
 class BacktestDataBroker(Broker):
     name = 'Backtest_Data'

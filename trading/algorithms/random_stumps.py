@@ -81,59 +81,22 @@ class RandomStumps(Strategy):
 
         return decision, order
 
-    def make_order(self, asking_price, order_side=SIDE_STAY):
-        trade_expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)
-        trade_expire = trade_expire.isoformat("T") + "Z"
-
-        if order_side == SIDE_BUY:
-            units = self.calc_units_to_buy(asking_price)
-        else:
-            units = self.calc_units_to_sell(asking_price)
-
-        instrument = self.portfolio.instrument
-        side = order_side
-        order_type = ORDER_MARKET
-        price = asking_price
-        expiry = trade_expire
-
-        if units <= 0:
-            return None
-        else:
-            return MarketOrder(instrument, units, side, order_type, price, expiry)
-
     def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
-        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
 
-        base_pair = self.portfolio.base_pair
-        quote_pair = self.portfolio.quote_pair
-
-        config = {
-            'instrument': self.portfolio.instrument,
-            'base_pair': {'currency': base_pair.currency, 'starting_units': base_pair.starting_units,
-                       'tradeable_units': base_pair.tradeable_units},
-            'quote_pair': {'currency': quote_pair.currency, 'starting_units': quote_pair.starting_units,
-                       'tradeable_units': quote_pair.tradeable_units}
-        }
-
-        strategy = {
+        strategy_data = {
+            'id': self.strategy_id,
             'name': self.name,
-            'config': config,
-            'profit': self.portfolio.profit,
             'data_window': self.data_window,
-            'interval': self.interval,
-            'indicators': self.strategy_data.keys(),
-            'instrument': self.instrument,
         }
 
-        query = {'_id': ObjectId(self.strategy_id)}
-        update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
+        super(RandomStumps).shutdown(strategy_data)
 
-        classifier_query = {'_id': ObjectId(self.classifier.classifier_id)}
-        serialized_classifier = self.classifier.serialize()
-        classifier_update = {'$set': {'classifier': serialized_classifier}}
+        classifier_data = {
+            'id': self.classifier.classifier_id,
+            'classifier': self.classifier.serialize()
+        }
 
-        self.db.strategies.update(query, update, upsert=True)
-        self.db.classifiers.update(classifier_query, classifier_update)
+        super(RandomStumps).shutdown(classifier_data)
 
 
     @property
