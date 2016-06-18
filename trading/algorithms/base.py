@@ -64,9 +64,9 @@ class Strategy(object):
         self.portfolio.update(order_responses)
 
     def log_strategy_data(self):
-        self.logger.info('Strategy Indicator Data:')
+        self.logger.debug('Strategy Indicator Data:')
         for indicator in self.strategy_data:
-            self.logger.info('Indicator {indicator} with value {value}'
+            self.logger.debug('Indicator {indicator} with value {value}'
                              .format(indicator=indicator, value=self.strategy_data[indicator]))
 
     def load_strategy(self, strategy_id):

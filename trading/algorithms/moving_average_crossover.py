@@ -14,7 +14,7 @@ from trading.util.transformations import normalize_price_data, normalize_current
 class MAC(Strategy):
     name = 'Moving Average Crossover'
 
-    crossover_threshold = 0.005
+    crossover_threshold = 0.001
 
     def __init__(self, config):
         strategy_id = config.get('strategy_id')
@@ -56,6 +56,9 @@ class MAC(Strategy):
         short_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TEN_CANDLES))
         long_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TWENTY_CANDLES))
 
+        if math.isnan(long_ma):
+            self.logger.error('JJDEBUG: Closing Market Data', data=closing_market_data)
+
         self.strategy_data['asking_price'] = asking_price
         self.strategy_data['short_term_ma'] = short_ma
         self.strategy_data['long_term_ma'] = long_ma
@@ -72,20 +75,21 @@ class MAC(Strategy):
 
         try:
             diff = 100 * (short_term - long_term) / ((short_term + long_term) / 2)
-            self.logger.debug('Diff {diff}'.format(diff=diff))
+            self.logger.info('Diff {diff}'.format(diff=diff))
+
+            if diff >= self.crossover_threshold and not self.invested:
+                decision = SIDE_BUY
+                order = self.make_order(asking_price, decision)
+
+            elif diff <= -self.crossover_threshold and self.invested:
+                decision = SIDE_SELL
+                order = self.make_order(asking_price, decision)
+
+            else:
+                return decision, None
         except Exception as e:
+            self.logger.error(e)
             return decision, order
-
-        if diff >= self.crossover_threshold and not self.invested:
-            decision = SIDE_BUY
-            order = self.make_order(asking_price, decision)
-
-        elif diff <= - self.crossover_threshold and self.invested:
-            decision = SIDE_SELL
-            order = self.make_order(asking_price, decision)
-
-        else:
-            return decision, None
 
         if order.units <=0:
             decision = SIDE_STAY

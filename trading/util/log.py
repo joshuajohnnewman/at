@@ -1,9 +1,12 @@
-import sys, traceback
+import os
+import sys
+import traceback
 
 
 class Logger:
     logging_message = '[{level}] {message} {data}'
     logging_message_no_data = '[{level}] message: {message}'
+    log_level = os.environ.get('LOG_LEVEL', 'INFO')
 
     def info(self, message, data=''):
         log_level = 'INFO'
@@ -21,6 +24,10 @@ class Logger:
 
     def debug(self, message, data=''):
         log_level = 'DEBUG'
+
+        if self.log_level != log_level:
+            return
+
         if data is not '':
             print(self.logging_message.format(level=log_level, message=message, data=data))
         else:

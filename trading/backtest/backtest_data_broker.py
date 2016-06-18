@@ -4,9 +4,9 @@ from bson import ObjectId
 
 from trading.broker.base import Broker
 from trading.broker.constants import GRANULARITY_DAY, COUNT_FORTY
-from trading.backtest.account import Account
+from trading.backtest.account import Account, SIDE_BUY, SIDE_SELL
 from trading.backtest.util import load_json_file
-
+from trading.live_trading.exceptions import LiveTradingException
 
 class BacktestDataBroker(Broker):
     name = 'Backtest_Data'
@@ -20,28 +20,32 @@ class BacktestDataBroker(Broker):
     def __init__(self, instrument, base_pair, quote_pair, data_file):
         self.account = Account(instrument, base_pair, quote_pair)
         self.data_file = data_file
-        self._current_tick = 0
 
     def get_account_information(self):
         account_information = self.get_account_info(self.account_id)
         return account_information
 
-    def get_current_price_data(self, instrument):
-        return self._get_current_price_data()
+    def get_current_price_data(self, instrument, tick):
+        return self._get_current_price_data(tick)
 
-    def get_historical_price_data(self, instrument, count=COUNT_FORTY, granularity=GRANULARITY_DAY):
-        starting_candle = self._current_tick
-        ending_candle = self._current_tick + count
+    def get_historical_price_data(self, instrument, count=COUNT_FORTY, granularity=GRANULARITY_DAY, tick=0):
+        starting_candle = tick
+        ending_candle = tick + count
 
-        return {
-            'candles': self._historic_data['candles'][starting_candle : ending_candle],
+        historical_data = {
+            'candles': self._historic_data['candles'][starting_candle: ending_candle],
             'instrument': self._historic_data['meta_data']['instrument'],
             'granularity': self._historic_data['meta_data']['granularity']
         }
 
-    def _get_current_price_data(self):
+        if len(historical_data['candles']) < count:
+            raise LiveTradingException
+        else:
+            return historical_data
+
+    def _get_current_price_data(self, tick):
         backtest_instrument = self.account.instrument
-        target_candle = self._historic_data['candles'][self._current_tick]
+        target_candle = self._historic_data['candles'][tick]
         candle_time = target_candle['time']
         closing_asking_price = target_candle['closeAsk']
 
@@ -58,7 +62,7 @@ class BacktestDataBroker(Broker):
             'granularity': granularity
         }
 
-        for i in range(0, count):
+        for i in range(0, min(count, len(candles))):
             self._historic_data['candles'].append(candles[i])
 
     def get_order(self, order_id):
@@ -67,20 +71,33 @@ class BacktestDataBroker(Broker):
     def make_order(self, order):
         self.account.make_order(order)
 
+        side = order.side
+
+        tradesOpened = []
+        tradesClosed = []
+
+        trade_data = {
+                "id": str(ObjectId()),
+                "units": order.units,
+                "side": order.side,
+                "takeProfit": 0,
+                "stopLoss": 0,
+                "trailingStop": 0
+            }
+
+        if side == SIDE_BUY:
+            tradesOpened.append(trade_data)
+
+        elif side == SIDE_SELL:
+            tradesClosed.append(trade_data)
+
         order_confirmation = {
             "instrument" : order.instrument,
-            "time" : datetime.datetime.now(),
-            "price" : order.price,
-            "tradeOpened" : {
-                "id" : str(ObjectId()),
-                "units" : order.units,
-                "side" : order.side,
-                "takeProfit" : 0,
-                "stopLoss" : 0,
-                "trailingStop" : 0
-            },
-            "tradesClosed" : [],
-            "tradeReduced" : {}
+            "time": datetime.datetime.now(),
+            "price": order.price,
+            "tradeOpened": tradesOpened,
+            "tradesClosed": tradesClosed,
+            "tradeReduced": {}
         }
 
         return order_confirmation
