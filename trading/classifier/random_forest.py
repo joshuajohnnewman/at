@@ -9,6 +9,8 @@ from trading.classifier.constants import STRATEGY_DECISION
 
 class RFClassifier(Classifier):
 
+    name = 'Random_Forest'
+
     num_estimators = 10
 
     _training_data = None

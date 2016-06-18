@@ -14,6 +14,8 @@ from trading.util.transformations import normalize_price_data, normalize_current
 class RandomStumps(Strategy):
     name = 'RandomStumps'
 
+    features = ['asking_price', 'long_candle_exit', 'short_candle_exit', 'lower_bound_ma', 'upper_bound_ma', 'decision']
+
     _classifier = None
 
     def __init__(self, config):
@@ -25,7 +27,10 @@ class RandomStumps(Strategy):
             config = self.load_strategy(strategy_id)
 
         super(RandomStumps, self).__init__(strategy_id, config)
+
         self.classifier_config = config['classifier_config']
+        self.classifier_config['features'] = self.features
+
         self.invested = False
 
     def calc_units_to_buy(self, current_price):
