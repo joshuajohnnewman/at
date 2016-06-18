@@ -6,7 +6,7 @@
 - Install MongoDB by following instructions for OSX: https://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/
 - Install Requirements via pip install -r /path/to/requirements.txt
 - Install Application by running python setup.py install
-
+- Brew install ta-lib
 
 ### Running a Trading Strategy
 - Get an Oanda Account ID, and API Token at: https://www.oanda.com/demo-account/login?intcmp=fxTradeAll_Site_TopNav_TradeDemoSignOutButton
@@ -16,6 +16,7 @@
 
 ### API (Interactive Candlestick Chart Marking)
 - Start Mongod Process by running starting script: bash trading/scripts/start.sh
+- python scripts/make_dataset.py 2015 1 1 h 2000
 - To inspect database run command mongodb
     - use $db
     - show tables

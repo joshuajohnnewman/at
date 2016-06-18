@@ -14,9 +14,12 @@ ORDER_MARKET = 'market'
 
 
 #--------------------------------#
+PRICE_ASK = 'ask'
 PRICE_ASK_CLOSE = 'closeAsk'
+PRICE_ASK_OPEN = 'openAsk'
 PRICE_ASK_HIGH = 'highAsk'
-PRICE_LOW_ASK = 'lowAsk'
+PRICE_ASK_LOW = 'lowAsk'
+VOLUME = 'volume'
 #--------------------------------#
 
 
