@@ -5,6 +5,7 @@ from abc import abstractmethod, ABCMeta
 
 from trading.algorithms import initialize_strategy, ORDER_BUY, ORDER_SELL, ORDER_STAY
 from trading.broker import PRICE_ASK
+from trading.db import get_database
 from trading.live.exceptions import LiveTradingException, StrategyException
 from trading.live.util import MAP_ORDER_TYPES, normalize_portfolio_update
 from trading.util.log import Logger
@@ -17,6 +18,7 @@ class TradingStrategyRunner(object):
     orders = {}
     invested = False
 
+    _db = None
     _logger = None
 
     def __init__(self, strategy_config, broker):
@@ -62,7 +64,23 @@ class TradingStrategyRunner(object):
             order_response = self.make_market_order(ORDER_SELL, sell_order)
             self.update_orders(order_response)
 
-        self.strategy.shutdown(self.start_time, end_time, self.tick_num, self.num_orders, shutdown_cause)
+        strategy_id, serialized_strategy = self.strategy.serialize()
+        session = self.make_trading_session_info(self.start_time, end_time, self.tick_num, self.num_orders, shutdown_cause)
+
+        query = {'_id': strategy_id}
+        update = {'$set': {'strategy_data': serialized_strategy}, '$push': {'sessions': session}}
+        self.db.strategies.update(query, update, upsert=True)
+
+    def make_trading_session_info(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
+        return {
+            'profit': self.strategy.portfolio.profit,
+            'session_id': time.time(),
+            'started_at': started_at,
+            'ended_at': ended_at,
+            'num_ticks': num_ticks,
+            'num_orders': num_orders,
+            'shutdown_cause': shutdown_cause
+        }
 
     def log_market_order(self, decision, market_order):
         now = datetime.datetime.now()
@@ -116,6 +134,12 @@ class TradingStrategyRunner(object):
         if self._logger is None:
             self._logger = Logger()
         return self._logger
+
+    @property
+    def db(self):
+        if self._db is None:
+            self._db = get_database()
+        return self._db
 
 
 

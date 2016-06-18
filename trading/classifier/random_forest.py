@@ -15,6 +15,7 @@ class RFClassifier(Classifier):
 
     def __init__(self, config):
         classifier_id = config['classifier_id']
+        self.features = config['features']
 
         if classifier_id is None:
             classifier_id = ObjectId()
@@ -33,6 +34,11 @@ class RFClassifier(Classifier):
 
         if unwrap_prediction is True:
             prediction = prediction[0]
+            if prediction != 'buy':
+                self.logger.info('JJPREDICTION', prediction)
+            else:
+                self.logger.info('KKPREDICTION', prediction)
+
 
         return MarketPrediction(prediction)
 
@@ -43,14 +49,10 @@ class RFClassifier(Classifier):
         X = []
         y = []
 
-        features = strategy_data[0].keys()
-
-        self.logger.info('Training Features', data=features)
-
         for tick in strategy_data:
             tick_data = strategy_data[tick]
             data = []
-            for feature in features:
+            for feature in self.features:
                 if feature == STRATEGY_DECISION:
                     y.append(tick_data[feature])
                 else:
@@ -61,14 +63,13 @@ class RFClassifier(Classifier):
 
     def prepare_prediction_data(self, strategy_data):
         X = []
-        features = strategy_data.keys()
-        self.logger.debug('Features', data=features)
-        self.logger.debug('Strategy Data', data=strategy_data)
+
         data = []
-        for feature in features:
+        for feature in self.features:
+            value = strategy_data[feature]
             if 'price' in feature:
                 continue
-            data.append(strategy_data[feature])
+            data.append(value)
         X.append(data)
 
         return X

@@ -92,33 +92,5 @@ class MAC(Strategy):
 
         return decision, order
 
-    def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
-        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
-
-        base_pair = self.portfolio.base_pair
-        quote_pair = self.portfolio.quote_pair
-
-        config = {
-            'instrument': self.portfolio.instrument,
-            'base_pair': {'currency': base_pair.currency, 'starting_units': base_pair.starting_units,
-                       'tradeable_units': base_pair.tradeable_units},
-            'quote_pair': {'currency': quote_pair.currency, 'starting_units': quote_pair.starting_units,
-                       'tradeable_units': quote_pair.tradeable_units}
-        }
-
-        strategy = {
-            'name': self.name,
-            'config': config,
-            'profit': self.portfolio.profit,
-            'data_window': self.data_window,
-            'interval': self.interval,
-            'indicators': self.strategy_data.keys(),
-            'instrument': self.instrument,
-        }
-
-        query = {'_id': ObjectId(self.strategy_id)}
-        update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
-        self.db.strategies.update(query, update, upsert=True)
-
 
 
