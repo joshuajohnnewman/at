@@ -1,13 +1,12 @@
-import datetime
 import math
-from decimal import Decimal
 
+from decimal import Decimal
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
-from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK
+from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK
 from trading.classifier.random_forest import RFClassifier
-from trading.indicators import INTERVAL_TEN_CANDLES
+from trading.indicators import INTERVAL_TEN_CANDLES, INTERVAL_TWENTY_CANDLES
 from trading.indicators.overlap_studies import calc_moving_average
 from trading.util.transformations import normalize_price_data, normalize_current_price_data
 
@@ -21,12 +20,11 @@ class RandomStumps(Strategy):
         strategy_id = config.get('strategy_id')
 
         if strategy_id is None:
-            self.strategy_id = ObjectId()
+            strategy_id = ObjectId()
         else:
             config = self.load_strategy(strategy_id)
 
-        super(RandomStumps, self).__init__(config)
-        self.strategy_id = strategy_id
+        super(RandomStumps, self).__init__(strategy_id, config)
         self.classifier_config = config['classifier_config']
         self.invested = False
 
@@ -56,7 +54,7 @@ class RandomStumps(Strategy):
 
         # Construct the upper and lower Bollinger Bands
         short_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TEN_CANDLES))
-        long_ma = Decimal(calc_moving_average(closing_market_data, 20))
+        long_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TWENTY_CANDLES))
 
         self.strategy_data['asking_price'] = asking_price
         self.strategy_data['short_term_ma'] = short_ma
@@ -80,24 +78,6 @@ class RandomStumps(Strategy):
             decision = SIDE_STAY
 
         return decision, order
-
-    def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
-
-        strategy_data = {
-            'id': self.strategy_id,
-            'name': self.name,
-            'data_window': self.data_window,
-        }
-
-        super(RandomStumps).shutdown(strategy_data)
-
-        classifier_data = {
-            'id': self.classifier.classifier_id,
-            'classifier': self.classifier.serialize()
-        }
-
-        super(RandomStumps).shutdown(classifier_data)
-
 
     @property
     def classifier(self):
