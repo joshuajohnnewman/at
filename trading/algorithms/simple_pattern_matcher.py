@@ -16,12 +16,14 @@ from trading.util.transformations import normalize_price_data, normalize_current
 class PatternMatch(Strategy):
     name = 'PatternMatch'
 
-    _classifier = None
-
     data_window = INTERVAL_ONE_HUNDRED_CANDLES
+    features = ['close', 'open', 'high', 'low']
     granularity = GRANULARITY_TEN_MINUTE
     required_volume = 10
     trend_interval = 30
+
+    _classifier = None
+
 
     def __init__(self, config):
         strategy_id = config.get('strategy_id')

@@ -17,12 +17,12 @@ class TradingStrategyRunner(object):
 
     orders = {}
     invested = False
+    tick_num = 0
 
     _db = None
     _logger = None
 
     def __init__(self, strategy_config, broker):
-        self.tick_num = 0
         self.num_orders = 0
         self.start_time = time.time()
 
@@ -47,6 +47,12 @@ class TradingStrategyRunner(object):
 
         return order_info_map
 
+    def update_strategy_portfolio(self, order_responses):
+        if order_responses:
+            self.strategy.update_portfolio(order_responses)
+            order_ids = order_responses.keys()
+            self.remove_recorded_orders(order_ids)
+
     def remove_recorded_orders(self, order_responses):
         order_ids = order_responses.keys()
 
@@ -64,7 +70,8 @@ class TradingStrategyRunner(object):
             order_response = self.make_market_order(ORDER_SELL, sell_order)
             self.update_orders(order_response)
 
-        strategy_id, serialized_strategy = self.strategy.serialize()
+        serialized_strategy = self.strategy.serialize()
+        strategy_id = self.strategy.strategy_id
         session = self.make_trading_session_info(self.start_time, end_time, self.tick_num, self.num_orders, shutdown_cause)
 
         query = {'_id': strategy_id}

@@ -90,7 +90,7 @@ class Strategy(object):
 
         return MarketOrder(instrument, units, side, order_type, price, expiry)
 
-    def serialize(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
+    def serialize(self):
 
         base_pair = self.portfolio.base_pair
         quote_pair = self.portfolio.quote_pair

@@ -63,6 +63,7 @@ class BacktestDataBroker(Broker):
             'granularity': granularity
         }
 
+        print('COUNT', count, 'CANDLES', len(candles))
         for i in range(0, min(count, len(candles))):
             self._historic_data['candles'].append(candles[i])
 
