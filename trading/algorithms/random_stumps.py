@@ -4,18 +4,24 @@ from decimal import Decimal
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
-from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK
+from trading.broker.constants import GRANULARITY_TEN_MINUTE
+
 from trading.classifier.random_forest import RFClassifier
-from trading.indicators import INTERVAL_TEN_CANDLES, INTERVAL_TWENTY_CANDLES
+from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, PRICE_ASK_LOW, PRICE_ASK
+from trading.indicators.price_transformation import calc_standard_deviation
+
 from trading.indicators.overlap_studies import calc_moving_average
 from trading.util.transformations import normalize_price_data, normalize_current_price_data
+from trading.indicators import calc_chandalier_exits, INTERVAL_FORTY_CANDLES
 
 
 class RandomStumps(Strategy):
     name = 'RandomStumps'
 
-    features = ['asking_price', 'long_candle_exit', 'short_candle_exit', 'lower_bound_ma', 'upper_bound_ma', 'decision']
-
+    features = ['asking_price', 'long_candle_exit', 'short_candle_exit', 'lower_bound_ma', 'upper_bound_ma']
+    granularity = GRANULARITY_TEN_MINUTE
+    long_exit_sensitivity = 10
+    short_exit_sensitivity = 5
     _classifier = None
 
     def __init__(self, config):
@@ -51,19 +57,28 @@ class RandomStumps(Strategy):
     def analyze_data(self, market_data):
         current_market_data = market_data['current']
         historical_market_data = market_data['historical']
-        historical_candle_data = historical_market_data['candles']
 
+        historical_candle_data = historical_market_data['candles']
         asking_price = normalize_current_price_data(current_market_data, PRICE_ASK)
 
         closing_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_CLOSE)
+        high_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_HIGH)
+        low_market_data = normalize_price_data(historical_candle_data, PRICE_ASK_LOW)
+
+        std = Decimal(calc_standard_deviation(closing_market_data, min(INTERVAL_FORTY_CANDLES, len(market_data))))
 
         # Construct the upper and lower Bollinger Bands
-        short_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TEN_CANDLES))
-        long_ma = Decimal(calc_moving_average(closing_market_data, INTERVAL_TWENTY_CANDLES))
+        ma = Decimal(calc_moving_average(closing_market_data, min(INTERVAL_FORTY_CANDLES, len(market_data))))
+        upper = ma + (Decimal(2) * std)
+        lower = ma - (Decimal(2) * std)
+
+        long_exit, short_exit = calc_chandalier_exits(closing_market_data, high_market_data, low_market_data)
 
         self.strategy_data['asking_price'] = asking_price
-        self.strategy_data['short_term_ma'] = short_ma
-        self.strategy_data['long_term_ma'] = long_ma
+        self.strategy_data['long_candle_exit'] = long_exit
+        self.strategy_data['short_candle_exit'] = short_exit
+        self.strategy_data['lower_bound_ma'] = lower
+        self.strategy_data['upper_bound_ma'] = upper
 
         self.log_strategy_data()
 
@@ -83,6 +98,15 @@ class RandomStumps(Strategy):
             decision = SIDE_STAY
 
         return decision, order
+
+    @staticmethod
+    def _check_candle_exits(asking_price, long_candle_exit, short_candle_exit):
+        if asking_price < long_candle_exit:
+            return SIDE_SELL
+        elif asking_price > short_candle_exit:
+            return SIDE_BUY
+        else:
+            return SIDE_STAY
 
     @property
     def classifier(self):

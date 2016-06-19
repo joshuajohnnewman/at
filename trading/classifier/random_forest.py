@@ -55,10 +55,8 @@ class RFClassifier(Classifier):
             tick_data = strategy_data[tick]
             data = []
             for feature in self.features:
-                if feature == STRATEGY_DECISION:
-                    y.append(tick_data[feature])
-                else:
-                    data.append(tick_data[feature])
+                data.append(tick_data[feature])
+            y.append(tick_data[STRATEGY_DECISION])
             X.append(data)
 
         return X, y
@@ -69,8 +67,6 @@ class RFClassifier(Classifier):
         data = []
         for feature in self.features:
             value = strategy_data[feature]
-            if 'price' in feature:
-                continue
             data.append(value)
         X.append(data)
 

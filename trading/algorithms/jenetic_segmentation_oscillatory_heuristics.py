@@ -105,8 +105,6 @@ class Josh(Strategy):
             order_decision = SIDE_SELL
             order = self.make_order(asking_price, order_side=order_decision)
 
-        self.strategy_data['decision'] = order_decision
-
         return order_decision, order
 
     @staticmethod

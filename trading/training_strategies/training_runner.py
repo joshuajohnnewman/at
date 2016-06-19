@@ -1,3 +1,5 @@
+import copy
+
 from bson import ObjectId
 
 from trading.live.exceptions import LiveTradingException, KeyboardInterruptMessage
@@ -11,13 +13,15 @@ class TrainingStrategyRunner(TradingStrategyRunner):
 
     def __init__(self, strategy_config, broker, num_training_points):
         self.num_training_points = num_training_points
-        super(TrainingStrategyRunner).__init__(strategy_config, broker)
+        super(TrainingStrategyRunner, self).__init__(strategy_config, broker)
 
         classifier_config = strategy_config['classifier_config']
 
         classifier_name = classifier_config.get('classifier_name')
         self.classifier_name = classifier_name
         self.classifier = CLASSIFIERS[classifier_name](classifier_config)
+
+        broker.get_backtest_price_data(self.instrument, num_training_points + 1000 , self.strategy.granularity)
 
     def tick(self):
         while self.tick_num < self.num_training_points:
@@ -27,9 +31,7 @@ class TrainingStrategyRunner(TradingStrategyRunner):
 
                 order_responses = self.get_order_updates()
 
-                self.strategy.update_portfolio(order_responses)
-                order_ids = order_responses.keys()
-                self.remove_recorded_orders(order_ids)
+                self.update_strategy_portfolio(order_responses)
 
                 historical_market_data = self.broker.get_historical_price_data(self.instrument,
                                                                                count=self.strategy.data_window,
@@ -44,11 +46,18 @@ class TrainingStrategyRunner(TradingStrategyRunner):
                 })
 
                 order_decision, market_order = self.strategy.make_decision()
+
+                strategy_data = self.strategy.strategy_data
+                strategy_data['decision'] = order_decision
+                self.logger.info('Strat Data', data=strategy_data)
+                self.logger.info('Strat Data Tick', data=self.tick_num)
+                self.training_data[self.tick_num] = copy.copy(strategy_data)
+
                 order_response = self.make_market_order(order_decision, market_order)
 
                 self.update_orders(order_response)
 
-                self.training_data[self.tick_num] = self.strategy.strategy_data
+
 
                 self.tick_num += 1
 
@@ -65,17 +74,17 @@ class TrainingStrategyRunner(TradingStrategyRunner):
                 self.shutdown(e)
                 break
 
-        self.train_classifier()
-        self.shutdown('Successful Training')
-
     def train_classifier(self):
+        self.logger.info('Training')
         X, y = self.classifier.prepare_training_data(self.training_data)
         self.classifier.train(X, y)
 
     def shutdown(self, shutdown_cause):
+        self.train_classifier()
         serialized_classifier = self.classifier.serialize()
-        self.db.insert_one({'_id': ObjectId(self.classifier.classifier_id), 'strategy': self.strategy.name,
+        self.db.classifiers.insert_one({'_id': ObjectId(self.classifier.classifier_id), 'strategy': self.strategy.name,
                             'classifier': serialized_classifier, 'name': serialized_classifier})
+        self.logger.info('Trained Classifier', data=self.classifier.classifier_id)
 
 
 
