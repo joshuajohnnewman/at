@@ -24,6 +24,7 @@ class PatternMatch(Strategy):
     features = ['close', 'open', 'high', 'low']
     granularity = GRANULARITY_TEN_MINUTE
     required_volume = 10
+    required_trend_strength = 25
     trend_interval = 30
 
     _classifier = None
@@ -97,17 +98,19 @@ class PatternMatch(Strategy):
         asking_price = self.strategy_data['asking']
         volume = self.strategy_data['volume']
         trend = self.strategy_data['trend']
+        trend_strength = self.strategy_data['trend_strength']
         pattern = self.strategy_data['pattern']
 
         decision = SIDE_STAY
         order = None
 
-        if trend == TREND_POSITIVE and volume > self.required_volume and pattern == SIDE_BUY:
+        if trend == TREND_POSITIVE and volume > self.required_volume and trend_strength > self.required_trend_strength and pattern == SIDE_BUY:
             order = self.make_order(asking_price, SIDE_BUY)
             decision = SIDE_BUY
-        elif trend == TREND_NEGATIVE and volume > self.required_volume and pattern == SIDE_SELL:
+
+        elif trend == TREND_NEGATIVE and volume > self.required_volume and trend_strength > self.required_trend_strength and pattern == SIDE_SELL:
             order = self.make_order(asking_price, SIDE_SELL)
-            decision = SIDE_STAY
+            decision = SIDE_SELL
 
         return decision, order
 
