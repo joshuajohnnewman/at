@@ -1,7 +1,7 @@
 from trading.algorithms import  ORDER_BUY, ORDER_SELL
 
 
-invested_map = {
+MAP_ORDER_TYPES = {
     ORDER_SELL: False,
     ORDER_BUY: True
 }

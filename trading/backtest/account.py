@@ -8,7 +8,7 @@ class Account:
     _logger = None
 
     def __init__(self, instrument, base_pair, quote_pair):
-        self.base_pair = Pair(base_pair['currency'], base_pair['starting_units'], base_pair['tradeable_units'])
+        self.base_pair = Pair(base_pair['currency'], base_pair['starting_units'], base_pair['starting_units'])
         self.quote_pair = Pair(quote_pair['currency'], 0, 0)
         self.primary_pair = PrimaryPair(base_pair['currency'], quote_pair['currency'])
 
@@ -21,23 +21,19 @@ class Account:
         return representation
 
     def make_order(self, order):
-        instrument = order.instrument
         units = order.units
         side = order.side
-        type = order.type
         price = order.price
-        expiry = order.expiry
 
         if side == SIDE_BUY:
-            traded_units = units * price
-            self.quote_pair['tradeable_units'] -= traded_units
-            self.base_pair['tradeable_units'] += units
+            trade_cost = units * price
+            self.quote_pair.tradeable_units += units
+            self.base_pair.tradeable_units -= trade_cost
 
         elif side == SIDE_SELL:
-            traded_units = units * price
-
-            self.quote_pair['tradeable_units'] -= units
-            self.base_pair['tradeable_units'] += traded_units
+            trade_gain = units / price
+            self.quote_pair.tradeable_units -= units
+            self.base_pair.tradeable_units += trade_gain
 
         else:
             # Todo: make backtest exceptions
@@ -46,7 +42,7 @@ class Account:
         self.update_account_state(price)
 
     def update_account_state(self, current_price):
-        hypothetical_profit_total = (current_price * self.quote_pair.tradeable_units) + self.base_pair.tradeable_units
+        hypothetical_profit_total =  ((current_price * self.quote_pair.tradeable_units) + self.base_pair.tradeable_units - self.base_pair.starting_units)
         self.profit = hypothetical_profit_total
 
     @property

@@ -7,7 +7,6 @@ def normalize_price_data(price_data, target_field=PRICE_ASK):
 
 
 def normalize_current_price_data(price_data, target_field=PRICE_ASK):
-    print('price_data', price_data)
     return price_data['prices'][0][target_field]
 
 

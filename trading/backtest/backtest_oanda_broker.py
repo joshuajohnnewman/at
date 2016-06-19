@@ -10,12 +10,12 @@ from trading.backtest.account import Account
 
 
 class BacktestBroker(Broker, EndpointsMixin):
-    name = 'Backtest'
+    name = 'Backtest_OANDA'
 
     _account_id = None
     _oanda = None
     _historic_data = {
-        'candles': {},
+        'candles': [],
         'meta_data': {}
     }
 
@@ -60,7 +60,7 @@ class BacktestBroker(Broker, EndpointsMixin):
         }
 
         for i in range(0, count):
-            self._historic_data['candles'][i] = candles[i]
+            self._historic_data['candles'].append(candles[i])
 
     def get_order(self, order_id):
         return {}
@@ -87,8 +87,8 @@ class BacktestBroker(Broker, EndpointsMixin):
         return order_confirmation
 
     def get_account_info(self, account_id):
-        account_currency = self.account.base_pair['currency']
-        balance = self.account.base_pair['tradeable_currency']
+        account_currency = self.account.base_pair.currency
+        balance = self.account.base_pair.tradeable_units
 
         return {
             'accountCurrency': account_currency,

@@ -1,12 +1,11 @@
-import datetime
 import math
 
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
 from trading.algorithms.constants import TREND_NEGATIVE, TREND_POSITIVE
-from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK, PRICE_ASK_CLOSE, \
-    PRICE_ASK_HIGH, PRICE_ASK_LOW, PRICE_ASK_OPEN, VOLUME
+from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, PRICE_ASK_LOW, \
+    PRICE_ASK_OPEN, VOLUME
 from trading.broker.constants import GRANULARITY_TEN_MINUTE
 from trading.classifier import RFClassifier
 from trading.indicators import INTERVAL_ONE_HUNDRED_CANDLES
@@ -17,12 +16,14 @@ from trading.util.transformations import normalize_price_data, normalize_current
 class PatternMatch(Strategy):
     name = 'PatternMatch'
 
-    _classifier = None
-
     data_window = INTERVAL_ONE_HUNDRED_CANDLES
+    features = ['close', 'open', 'high', 'low']
     granularity = GRANULARITY_TEN_MINUTE
     required_volume = 10
     trend_interval = 30
+
+    _classifier = None
+
 
     def __init__(self, config):
         strategy_id = config.get('strategy_id')
@@ -32,8 +33,7 @@ class PatternMatch(Strategy):
         else:
             config = self.load_strategy(strategy_id)
 
-        super(PatternMatch, self).__init__(config)
-        self.strategy_id = strategy_id
+        super(PatternMatch, self).__init__(strategy_id, config)
         self.classifier_config = config['classifier_config']
         self.invested = False
 
@@ -107,56 +107,6 @@ class PatternMatch(Strategy):
             decision = SIDE_STAY
 
         return decision, order
-
-    def make_order(self, asking_price, order_side=SIDE_BUY):
-        trade_expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)
-        trade_expire = trade_expire.isoformat('T') + 'Z'
-
-        if order_side == SIDE_BUY:
-            units = self.calc_units_to_buy(asking_price)
-        else:
-            units = self.calc_units_to_sell(asking_price)
-
-        instrument = self.portfolio.instrument
-        side = order_side
-        order_type = ORDER_MARKET
-        price = asking_price
-        expiry = trade_expire
-
-        return MarketOrder(instrument, units, side, order_type, price, expiry)
-
-    def shutdown(self, started_at, ended_at, num_ticks, num_orders, shutdown_cause):
-        session_info = self.make_trading_session_info(started_at, ended_at, num_ticks, num_orders, shutdown_cause)
-
-        base_pair = self.portfolio.base_pair
-        quote_pair = self.portfolio.quote_pair
-
-        config = {
-            'instrument': self.portfolio.instrument,
-            'base_pair': {'currency': base_pair.currency, 'starting_units': base_pair.starting_units,
-                       'tradeable_units': base_pair.tradeable_units},
-            'quote_pair': {'currency': quote_pair.currency, 'starting_units': quote_pair.starting_units,
-                       'tradeable_units': quote_pair.tradeable_units}
-        }
-
-        strategy = {
-            'config': config,
-            'profit': self.portfolio.profit,
-            'data_window': self.data_window,
-            'interval': self.interval,
-            'indicators': self.strategy_data.keys(),
-            'instrument': self.instrument,
-        }
-
-        strategy_query = {'_id': ObjectId(self.strategy_id)}
-        strategy_update = {'$set': {'strategy_data': strategy}, '$push': {'sessions': session_info}}
-        serialized_classifier = self.classifier.serialize()
-
-        classifier_query = {'_id': ObjectId(self.classifier.classifier_id)}
-        classifier_update = {'$set': {'classifier': serialized_classifier}}
-
-        self.db.strategires.update(strategy_query, strategy_update)
-        self.db.classifiers.update(classifier_query, classifier_update)
 
     def calculate_trend(self, high, low, close):
         trend_start_low = low[self.trend_interval]
