@@ -4,10 +4,8 @@ from decimal import Decimal
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
-from trading.broker.constants import GRANULARITY_TEN_MINUTE
-
+from trading.constants.granularity import GRANULARITY_TEN_MINUTE
 from trading.classifier.random_forest import RFClassifier
-
 from trading.indicators.overlap_studies import calc_moving_average
 from trading.util.transformations import normalize_price_data, normalize_current_price_data
 

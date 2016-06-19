@@ -1,5 +1,6 @@
 from trading.account.pair import Pair, PrimaryPair
-from trading.broker import SIDE_BUY, SIDE_SELL
+from trading.broker import SIDE_SELL
+from trading.constants.order import SIDE_BUY, SIDE_SELL
 
 from trading.util.log import Logger
 

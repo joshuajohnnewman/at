@@ -3,9 +3,9 @@ import time
 
 from abc import abstractmethod, ABCMeta
 
-from trading.algorithms import initialize_strategy, ORDER_BUY, ORDER_STAY
+from trading.algorithms import initialize_strategy
 from trading.constants.order import SIDE_SELL, SIDE_BUY, SIDE_STAY
-from trading.broker import PRICE_ASK
+from trading.constants.price_data import PRICE_ASK
 from trading.db import get_database
 from trading.live.exceptions import LiveTradingException, StrategyException
 from trading.live.util import MAP_ORDER_TYPES, normalize_portfolio_update

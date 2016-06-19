@@ -1,1 +1,0 @@
-STRATEGY_DECISION = 'decision'

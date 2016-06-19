@@ -3,9 +3,10 @@ import math
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
-from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, PRICE_ASK_LOW, \
-    PRICE_ASK_OPEN, VOLUME
-from trading.broker.constants import GRANULARITY_TEN_MINUTE
+from trading.constants.price_data import PRICE_ASK, PRICE_ASK_CLOSE, PRICE_ASK_OPEN, PRICE_ASK_HIGH, PRICE_ASK_LOW, \
+    VOLUME
+from trading.constants.order import SIDE_BUY, SIDE_SELL, SIDE_STAY
+from trading.constants.granularity import GRANULARITY_TEN_MINUTE
 from trading.classifier import RFClassifier
 from trading.constants.interval import INTERVAL_ONE_HUNDRED_CANDLES
 from trading.indicators.momentum_indicators import calc_average_directional_movement_index_rating
@@ -26,7 +27,6 @@ class PatternMatch(Strategy):
     trend_interval = 30
 
     _classifier = None
-
 
     def __init__(self, config):
         strategy_id = config.get('strategy_id')

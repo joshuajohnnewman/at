@@ -3,8 +3,10 @@ import datetime
 from bson import ObjectId
 
 from trading.broker.base import Broker
-from trading.broker.constants import GRANULARITY_DAY, COUNT_FORTY
-from trading.backtest.account import Account, SIDE_BUY, SIDE_SELL
+from trading.constants.interval import INTERVAL_FORTY_CANDLES
+from trading.constants.granularity import GRANULARITY_DAY
+from trading.backtest.account import Account, SIDE_SELL
+from trading.constants.order import SIDE_BUY, SIDE_SELL
 from trading.backtest.util import load_json_file
 from trading.live.exceptions import LiveTradingException
 
@@ -29,7 +31,7 @@ class BacktestDataBroker(Broker):
     def get_current_price_data(self, instrument, tick):
         return self._get_current_price_data(tick)
 
-    def get_historical_price_data(self, instrument, count=COUNT_FORTY, granularity=GRANULARITY_DAY, tick=0):
+    def get_historical_price_data(self, instrument, count=INTERVAL_FORTY_CANDLES, granularity=GRANULARITY_DAY, tick=0):
         starting_candle = tick
         ending_candle = tick + count
 

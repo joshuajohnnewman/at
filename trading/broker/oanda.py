@@ -3,7 +3,8 @@ import os
 from oandapy.oandapy import EndpointsMixin
 
 from trading.broker.base import Broker
-from trading.broker.constants import GRANULARITY_DAY, COUNT_FORTY
+from trading.constants.interval import INTERVAL_FORTY_CANDLES
+from trading.constants.granularity import GRANULARITY_DAY
 
 
 class OandaBroker(Broker, EndpointsMixin):
@@ -22,7 +23,7 @@ class OandaBroker(Broker, EndpointsMixin):
         broker_response = self.oanda.get_prices(instruments=instrument)
         return broker_response
 
-    def get_historical_price_data(self, instrument, count=COUNT_FORTY, granularity=GRANULARITY_DAY):
+    def get_historical_price_data(self, instrument, count=INTERVAL_FORTY_CANDLES, granularity=GRANULARITY_DAY):
         broker_response = self.oanda.get_history(instrument=instrument, count=count, granularity=granularity)
         return broker_response
 
