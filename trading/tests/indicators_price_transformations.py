@@ -12,9 +12,8 @@ class PriceTransformationTests(unittest.TestCase):
         sd = calc_standard_deviation(one_hundred_data_points, interval=100)
         self.assertEqual(sd, 28.866070047722118)
 
-        sd = calc_standard_deviation(one_hundred_data_points, interval=50)
-
-        self.assertEqual(sd, 14.430869689661812)
+        sd = calc_standard_deviation(one_hundred_data_points, interval=30)
+        self.assertEqual(sd, 8.6554414483992073)
 
         with self.assertRaises(TalibIntervalException):
             self.assertRaises(calc_standard_deviation(one_hundred_data_points, interval=2000))
