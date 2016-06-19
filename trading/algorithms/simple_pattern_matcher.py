@@ -3,14 +3,17 @@ import math
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
-from trading.algorithms.constants import TREND_NEGATIVE, TREND_POSITIVE
 from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, PRICE_ASK_LOW, \
     PRICE_ASK_OPEN, VOLUME
 from trading.broker.constants import GRANULARITY_TEN_MINUTE
 from trading.classifier import RFClassifier
-from trading.indicators import INTERVAL_ONE_HUNDRED_CANDLES
+from trading.constants.interval import INTERVAL_ONE_HUNDRED_CANDLES
 from trading.indicators.momentum_indicators import calc_average_directional_movement_index_rating
 from trading.util.transformations import normalize_price_data, normalize_current_price_data, get_last_candle_data
+
+
+TREND_POSITIVE = 'positive'
+TREND_NEGATIVE = 'negative'
 
 
 class PatternMatch(Strategy):

@@ -1,8 +1,17 @@
 import numpy as np
 import talib
 
+from trading.indicators.exceptions import TalibIntervalException
+
 
 def calc_average_directional_movement_index(high, low, close, interval):
+    if len(high) < interval or len(low) < interval or len(close) < interval:
+        raise TalibIntervalException
+
+    high = high[:interval]
+    low = low[:interval]
+    close = close[:interval]
+
     high = np.asarray(high)
     low = np.asarray(low)
     close = np.asarray(close)
@@ -11,6 +20,13 @@ def calc_average_directional_movement_index(high, low, close, interval):
 
 
 def calc_average_directional_movement_index_rating(high, low, close, interval):
+    if len(high) < interval or len(low) < interval or len(close) < interval:
+        raise TalibIntervalException
+
+    high = high[:interval]
+    low = low[:interval]
+    close = close[:interval]
+
     high = np.asarray(high)
     low = np.asarray(low)
     close = np.asarray(close)

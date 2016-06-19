@@ -1,5 +1,4 @@
 from abc import abstractmethod, ABCMeta
-from bson import ObjectId
 from collections import namedtuple
 
 

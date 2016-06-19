@@ -6,7 +6,8 @@ from bson import ObjectId
 from trading.algorithms.base import Strategy
 from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, PRICE_ASK_LOW, PRICE_ASK
 from trading.broker.constants import GRANULARITY_TEN_MINUTE
-from trading.indicators import calc_chandalier_exits, INTERVAL_FORTY_CANDLES
+from trading.constants.constants.interval import INTERVAL_FORTY_CANDLES
+from trading.indicators.misc import calc_chandalier_exits
 from trading.indicators.overlap_studies import calc_moving_average
 from trading.indicators.price_transformation import calc_standard_deviation
 from trading.util.transformations import normalize_price_data, normalize_current_price_data

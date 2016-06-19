@@ -1,6 +1,8 @@
 import numpy as np
 import talib
 
+from trading.indicators.exceptions import TalibIntervalException
+
 
 def calc_bollinger_bands():
     pass
@@ -27,6 +29,11 @@ def calc_kaufman_moving_average():
 
 
 def calc_moving_average(data, interval):
+    if len(data) < interval:
+        raise TalibIntervalException
+
+    data = data[:interval]
+
     target_data = np.asarray(data)
     return talib.MA(target_data, interval)[-1]
 

@@ -57,8 +57,8 @@ class Portfolio:
             self.logger.info('Updating portfolio for open position trade with old portfolio {portfolio}'
                              .format(portfolio=self), data=order)
 
-            self.base_pair.tradeable_units -=  trade_cost
-            self.quote_pair.tradeable_units += units_bought
+            self.base_pair.tradeable_units -=trade_cost
+            self.quote_pair.tradeable_units +=units_bought
 
             self.logger.info('New Portfolio value {portfolio}'.format(portfolio=self), data=order)
 
@@ -78,8 +78,8 @@ class Portfolio:
 
             trade_gain = units_sold / price
 
-            self.quote_pair.tradeable_units -= units_sold
-            self.base_pair.tradeable_units += trade_gain
+            self.quote_pair.tradeable_units -=units_sold
+            self.base_pair.tradeable_units +=trade_gain
 
             self.logger.info('New Portfolio value {portfolio}'.format(portfolio=self), data=order)
 
