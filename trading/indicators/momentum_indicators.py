@@ -5,32 +5,54 @@ from trading.indicators.exceptions import TalibIntervalException
 
 
 def calc_average_directional_movement_index(high, low, close, interval):
-    if len(high) < interval or len(low) < interval or len(close) < interval:
+    """
+    First data point is earliest
+    :param high:
+    :param low:
+    :param close:
+    :param interval:
+    :return:
+    """
+    required_interval = interval * 2
+
+    if len(high) < required_interval or len(low) < required_interval or len(close) < required_interval:
         raise TalibIntervalException
 
-    high = high[:interval]
-    low = low[:interval]
-    close = close[:interval]
+    high = high[-required_interval:]
+    low = low[-required_interval:]
+    close = close[-required_interval:]
 
     high = np.asarray(high)
     low = np.asarray(low)
     close = np.asarray(close)
+
     adx = talib.ADX(high, low, close, timeperiod=interval)
     return adx[-1]
 
 
 def calc_average_directional_movement_index_rating(high, low, close, interval):
-    if len(high) < interval or len(low) < interval or len(close) < interval:
+    """
+    First data point is earliest
+    :param high:
+    :param low:
+    :param close:
+    :param interval:
+    :return:
+    """
+    required_interval = interval * 3
+
+    if len(high) < required_interval or len(low) < required_interval or len(close) < required_interval:
         raise TalibIntervalException
 
-    high = high[:interval]
-    low = low[:interval]
-    close = close[:interval]
+    high = high[-required_interval:]
+    low = low[-required_interval:]
+    close = close[-required_interval:]
 
     high = np.asarray(high)
     low = np.asarray(low)
     close = np.asarray(close)
     adxr = talib.ADXR(high, low, close, timeperiod=interval)
+
     return adxr[-1]
 
 

@@ -24,7 +24,7 @@ def calc_standard_deviation(data, interval):
     if len(data) < interval:
         raise TalibIntervalException
 
-    data = data[:interval]
+    data = data[-interval:]
     data = np.asarray(data)
     stdev = talib.STDDEV(data, timeperiod=interval)
     return stdev[-1]

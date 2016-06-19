@@ -29,13 +29,20 @@ def calc_kaufman_moving_average():
 
 
 def calc_moving_average(data, interval):
+    """
+    First data point is earliest
+    :param data:
+    :param interval:
+    :return:
+    """
     if len(data) < interval:
         raise TalibIntervalException
 
-    data = data[:interval]
+    data = data[-interval:]
 
     target_data = np.asarray(data)
-    return talib.MA(target_data, interval)[-1]
+
+    return talib.MA(target_data, timeperiod=2)[-1]
 
 
 def calc_moving_average_variable_period():
