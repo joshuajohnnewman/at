@@ -4,8 +4,9 @@ from decimal import Decimal
 from bson import ObjectId
 
 from trading.algorithms.base import Strategy
-from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY, PRICE_ASK_CLOSE, PRICE_ASK
-from trading.indicators import INTERVAL_TEN_CANDLES, INTERVAL_TWENTY_CANDLES
+from trading.constants.price_data import PRICE_ASK, PRICE_ASK_CLOSE
+from trading.constants.order import SIDE_BUY, SIDE_SELL, SIDE_STAY
+from trading.constants.interval import INTERVAL_TWENTY_CANDLES, INTERVAL_TEN_CANDLES
 from trading.indicators.overlap_studies import calc_moving_average
 from trading.util.transformations import normalize_price_data, normalize_current_price_data
 

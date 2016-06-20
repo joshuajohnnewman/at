@@ -1,9 +1,8 @@
-from trading.algorithms import  ORDER_BUY, ORDER_SELL
-
+from trading.constants.order import SIDE_SELL, SIDE_BUY
 
 MAP_ORDER_TYPES = {
-    ORDER_SELL: False,
-    ORDER_BUY: True
+    SIDE_SELL: False,
+    SIDE_BUY: True
 }
 
 
