@@ -17,6 +17,7 @@ from trading.util.transformations import normalize_price_data, normalize_current
 class Josh(Strategy):
     name = 'Josh'
 
+    interval = 300
     granularity = GRANULARITY_TEN_MINUTE
     long_exit_sensitivity = 10
     short_exit_sensitivity = 5

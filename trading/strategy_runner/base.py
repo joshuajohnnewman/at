@@ -109,7 +109,11 @@ class TradingStrategyRunner(object):
     def make_market_order(self, order_decision, market_order):
         SUPPORTED_ORDER_TYPES = (SIDE_SELL, SIDE_BUY)
 
-        if order_decision in SUPPORTED_ORDER_TYPES:
+
+        if order_decision is not SIDE_STAY and market_order.units <=0:
+            return {}
+
+        elif order_decision in SUPPORTED_ORDER_TYPES:
             order_response = self.broker.make_order(market_order)
             self.invested = MAP_ORDER_TYPES[order_decision]
             self.num_orders += 1
