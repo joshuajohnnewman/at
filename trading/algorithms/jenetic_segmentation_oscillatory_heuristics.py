@@ -89,6 +89,8 @@ class Josh(Strategy):
         order_decision = SIDE_STAY
         order = None
 
+        self.logger.info('Order', data=order_decision)
+
         if asking_price < (long_candle_exit - self.long_exit_sensitivity):
             order_decision = SIDE_SELL
             order = self.make_order(asking_price, order_side=order_decision)
