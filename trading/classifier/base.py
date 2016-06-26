@@ -1,9 +1,7 @@
 from abc import abstractmethod, ABCMeta
-from bson import ObjectId
 from collections import namedtuple
 
-
-from trading.broker import SIDE_BUY, SIDE_SELL, SIDE_STAY
+from trading.constants.order import SIDE_BUY, SIDE_SELL, SIDE_STAY
 from trading.db import get_database
 from trading.util.log import Logger
 

@@ -1,4 +1,4 @@
-from trading.broker import PRICE_ASK
+from trading.constants.price_data import PRICE_ASK
 
 
 def normalize_price_data(price_data, target_field=PRICE_ASK):

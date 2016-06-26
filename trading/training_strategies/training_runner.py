@@ -7,6 +7,7 @@ from trading.live.exceptions import LiveTradingException, KeyboardInterruptMessa
 from trading.classifier import CLASSIFIERS
 from trading.strategy_runner.base import TradingStrategyRunner
 
+
 class TrainingStrategyRunner(TradingStrategyRunner):
     _logger = None
     training_data = {}
@@ -21,7 +22,7 @@ class TrainingStrategyRunner(TradingStrategyRunner):
         self.classifier_name = classifier_name
         self.classifier = CLASSIFIERS[classifier_name](classifier_config)
 
-        broker.get_backtest_price_data(self.instrument, num_training_points + 1000 , self.strategy.granularity)
+        broker.get_backtest_price_data(self.instrument, num_training_points + 1000, self.strategy.granularity)
 
     def tick(self):
         while self.tick_num < self.num_training_points:
@@ -57,8 +58,6 @@ class TrainingStrategyRunner(TradingStrategyRunner):
 
                 self.update_orders(order_response)
 
-
-
                 self.tick_num += 1
 
             except (KeyboardInterrupt, SystemExit) as e:
@@ -83,7 +82,7 @@ class TrainingStrategyRunner(TradingStrategyRunner):
         self.train_classifier()
         serialized_classifier = self.classifier.serialize()
         self.db.classifiers.insert_one({'_id': ObjectId(self.classifier.classifier_id), 'strategy': self.strategy.name,
-                            'classifier': serialized_classifier, 'name': serialized_classifier})
+                                        'classifier': serialized_classifier, 'name': serialized_classifier})
         self.logger.info('Trained Classifier', data=self.classifier.classifier_id)
 
 

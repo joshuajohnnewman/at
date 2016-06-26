@@ -1,13 +1,14 @@
 import datetime
-
 from abc import abstractmethod, ABCMeta
+
 from bson import ObjectId
 
 from trading.account.portfolio import Portfolio
-from trading.broker import MarketOrder, ORDER_MARKET, SIDE_BUY
-from trading.broker.constants import GRANULARITY_HOUR
+from trading.broker import MarketOrder
+from trading.constants.order import SIDE_BUY, ORDER_MARKET
+from trading.constants.granularity import GRANULARITY_HOUR
+from trading.constants.interval import INTERVAL_FORTY_CANDLES
 from trading.db import get_database
-from trading.indicators import INTERVAL_FORTY_CANDLES
 from trading.util.log import Logger
 
 

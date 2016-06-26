@@ -4,7 +4,7 @@ from bson import ObjectId
 from sklearn import ensemble
 
 from trading.classifier.base import Classifier, MarketPrediction
-from trading.classifier.constants import STRATEGY_DECISION
+from trading.constants.classifier import STRATEGY_DECISION
 
 
 class RFClassifier(Classifier):

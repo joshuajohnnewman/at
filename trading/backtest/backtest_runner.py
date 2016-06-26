@@ -3,7 +3,7 @@ import time
 from collections import defaultdict
 
 from trading.algorithms import ORDER_SELL
-from trading.broker import PRICE_ASK
+from trading.constants.price_data import PRICE_ASK
 from trading.live.exceptions import LiveTradingException, KeyboardInterruptMessage
 from trading.strategy_runner.base import TradingStrategyRunner
 from trading.util.transformations import normalize_current_price_data

@@ -3,8 +3,9 @@ import time
 
 from abc import abstractmethod, ABCMeta
 
-from trading.algorithms import initialize_strategy, ORDER_BUY, ORDER_SELL, ORDER_STAY
-from trading.broker import PRICE_ASK
+from trading.algorithms import initialize_strategy
+from trading.constants.order import SIDE_SELL, SIDE_BUY, SIDE_STAY
+from trading.constants.price_data import PRICE_ASK
 from trading.db import get_database
 from trading.live.exceptions import LiveTradingException, StrategyException
 from trading.live.util import MAP_ORDER_TYPES, normalize_portfolio_update
@@ -66,8 +67,8 @@ class TradingStrategyRunner(object):
         if self.invested:
             current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
             asking_price =  normalize_current_price_data(current_market_data, target_field=PRICE_ASK)
-            sell_order = self.strategy.make_order(asking_price, order_side=ORDER_SELL)
-            order_response = self.make_market_order(ORDER_SELL, sell_order)
+            sell_order = self.strategy.make_order(asking_price, order_side=SIDE_SELL)
+            order_response = self.make_market_order(SIDE_SELL, sell_order)
             self.update_orders(order_response)
 
         serialized_strategy = self.strategy.serialize()
@@ -106,14 +107,18 @@ class TradingStrategyRunner(object):
                                  expiry=expiry, strategy_name=strategy_name))
 
     def make_market_order(self, order_decision, market_order):
-        SUPPORTED_ORDER_TYPES = (ORDER_SELL, ORDER_BUY)
+        SUPPORTED_ORDER_TYPES = (SIDE_SELL, SIDE_BUY)
 
-        if order_decision in SUPPORTED_ORDER_TYPES:
+
+        if order_decision is not SIDE_STAY and market_order.units <=0:
+            return {}
+
+        elif order_decision in SUPPORTED_ORDER_TYPES:
             order_response = self.broker.make_order(market_order)
             self.invested = MAP_ORDER_TYPES[order_decision]
             self.num_orders += 1
 
-        elif order_decision == ORDER_STAY:
+        elif order_decision == SIDE_STAY:
             return {}
 
         else:

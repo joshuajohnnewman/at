@@ -15,7 +15,7 @@ class LiveTradingStrategyRunner(TradingStrategyRunner):
                 self.strategy.portfolio.update_account_portfolio_data(account_information)
 
                 order_responses = self.get_order_updates()
-                self.strategy.update_portfolio(order_responses)
+                self.update_strategy_portfolio(order_responses)
                 self.remove_recorded_orders(order_responses)
 
                 historical_market_data = self.broker.get_historical_price_data(self.instrument,
@@ -29,6 +29,7 @@ class LiveTradingStrategyRunner(TradingStrategyRunner):
                 })
 
                 order_decision, market_order = self.strategy.make_decision()
+
                 order_response = self.make_market_order(order_decision, market_order)
 
                 self.update_orders(order_response)
