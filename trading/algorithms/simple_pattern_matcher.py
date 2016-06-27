@@ -20,14 +20,14 @@ TREND_NEGATIVE = 'negative'
 class PatternMatch(Strategy):
     name = 'PatternMatch'
 
+    _classifier = None
+
     data_window = INTERVAL_ONE_HUNDRED_CANDLES
     features = ['close', 'open', 'high', 'low']
     granularity = GRANULARITY_TEN_MINUTE
     required_volume = 10
     required_trend_strength = 25
     trend_interval = 30
-
-    _classifier = None
 
     def __init__(self, config):
         strategy_id = config.get('strategy_id')
@@ -79,7 +79,7 @@ class PatternMatch(Strategy):
         self.strategy_data['volume'] = current_volume
         self.strategy_data['trend'] = trend_direction
         self.strategy_data['trend_strength'] = trend_strength
-        self.strategy_data['asking']  = asking_price
+        self.strategy_data['asking'] = asking_price
 
         X = {
             'open': current_open,
@@ -92,7 +92,6 @@ class PatternMatch(Strategy):
         pattern = market_prediction.decision
         self.logger.info('Classifier Decision {prediction}'.format(prediction=market_prediction))
         self.strategy_data['pattern'] = pattern
-        self.log_strategy_data()
 
     def make_decision(self):
         asking_price = self.strategy_data['asking']
@@ -104,11 +103,15 @@ class PatternMatch(Strategy):
         decision = SIDE_STAY
         order = None
 
-        if trend == TREND_POSITIVE and volume > self.required_volume and trend_strength > self.required_trend_strength and pattern == SIDE_BUY:
+        if trend == TREND_POSITIVE and volume > self.required_volume and trend_strength > self.required_trend_strength \
+                and pattern == SIDE_BUY:
+
             order = self.make_order(asking_price, SIDE_BUY)
             decision = SIDE_BUY
 
-        elif trend == TREND_NEGATIVE and volume > self.required_volume and trend_strength > self.required_trend_strength and pattern == SIDE_SELL:
+        elif trend == TREND_NEGATIVE and volume > self.required_volume and trend_strength > self.required_trend_strength \
+                and pattern == SIDE_SELL:
+
             order = self.make_order(asking_price, SIDE_SELL)
             decision = SIDE_SELL
 

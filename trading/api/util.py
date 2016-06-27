@@ -36,7 +36,8 @@ def make_date_id_map(candles, hours_offset):
     for candle in candles:
         date = candle['date']
 
-        old_formatted_date = '-'.join([str(date['year']), str(date['month']), str(date['day']), str(date['hour']), str(date['minute'])])
+        old_formatted_date = '-'.join([str(date['year']), str(date['month']), str(date['day']), str(date['hour']),
+                                       str(date['minute'])])
 
         old_hours = int(date['hour'])
         old_days = int(date['day'])
@@ -50,7 +51,11 @@ def make_date_id_map(candles, hours_offset):
             hours = new_hours
             days = old_days
 
-        new_formatted_date = '-'.join([str(date['year']), str(date['month']), str(days), str(hours), str(date['minute'])])
+        new_formatted_date = '-'.join([str(date['year']), str(date['month']), str(days), str(hours),
+                                       str(date['minute'])])
+
         print(old_formatted_date, new_formatted_date)
+
         date_id_map[new_formatted_date] = candle
+
     return date_id_map

@@ -18,7 +18,8 @@ def main():
         'instrument': instrument,
         'base_pair': base_pair,
         'quote_pair': quote_pair,
-        'classifier_config': {'classifier_id': None, 'classifier_name': RFClassifier.name, 'features': RandomStumps.features}
+        'classifier_config': {'classifier_id': None, 'classifier_name': RFClassifier.name,
+                              'features': RandomStumps.features}
     }
 
     num_candles = 14316

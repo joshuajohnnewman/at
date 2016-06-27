@@ -8,12 +8,9 @@ from trading.constants.classifier import STRATEGY_DECISION
 
 
 class RFClassifier(Classifier):
-
     name = 'Random_Forest'
 
     num_estimators = 10
-
-    _training_data = None
 
     def __init__(self, config):
         classifier_id = config['classifier_id']
@@ -36,16 +33,11 @@ class RFClassifier(Classifier):
 
         if unwrap_prediction is True:
             prediction = prediction[0]
-            if prediction != 'buy':
-                self.logger.info('JJPREDICTION', prediction)
-            else:
-                self.logger.info('KKPREDICTION', prediction)
-
 
         return MarketPrediction(prediction)
 
     def train(self, X, y):
-        self.classifier.fit(X,y)
+        self.classifier.fit(X, y)
 
     def prepare_training_data(self, strategy_data):
         X = []
@@ -53,9 +45,11 @@ class RFClassifier(Classifier):
 
         for tick in strategy_data:
             tick_data = strategy_data[tick]
+
             data = []
             for feature in self.features:
                 data.append(tick_data[feature])
+
             y.append(tick_data[STRATEGY_DECISION])
             X.append(data)
 
@@ -68,6 +62,7 @@ class RFClassifier(Classifier):
         for feature in self.features:
             value = strategy_data[feature]
             data.append(value)
+
         X.append(data)
 
         return X

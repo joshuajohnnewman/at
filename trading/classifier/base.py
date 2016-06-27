@@ -6,7 +6,8 @@ from trading.db import get_database
 from trading.util.log import Logger
 
 
-MarketPrediction = namedtuple('MarketPrediction', ('decision'))
+MarketPrediction = namedtuple('MarketPrediction', 'decision')
+
 
 predictions_map = {
     0: SIDE_STAY,
@@ -38,16 +39,21 @@ class Classifier:
     def prepare_training_data(self, strategy_data):
         X = []
         y = []
+
         features = strategy_data[0].keys()
-        print(features)
+        self.logger.info('Training: Classifier features {features}'.format(features=features))
+
         for tick in strategy_data:
             tick_data = strategy_data[tick]
+
             data = []
             for feature in features:
+
                 if feature == 'decision':
                     y.append(tick_data[feature])
                 else:
                     data.append(tick_data[feature])
+
             X.append(data)
 
         return X, y
@@ -56,14 +62,19 @@ class Classifier:
         X = []
 
         features = strategy_data[0].keys()
+        self.logger.info('Predicting: Classifier features {features}'.format(features=features))
+
         for tick in strategy_data:
             tick_data = strategy_data[tick]
+
             data = []
             for feature in features:
+
                 if feature == 'decision':
                     continue
                 else:
                     data.append(tick_data[feature])
+
             X.append(data)
 
         return X

@@ -1,7 +1,7 @@
 import json
 
 
-def get_historical_data(file):
-    with open(file) as f:
-        data = json.load(file)
+def get_historical_data(file_name):
+    with open(file_name) as f:
+        data = json.load(f)
     return data

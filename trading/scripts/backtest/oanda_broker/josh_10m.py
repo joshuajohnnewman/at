@@ -1,12 +1,12 @@
 from trading.constants.instrument import INSTRUMENT_EUR_USD
 from trading.algorithms.jenetic_segmentation_oscillatory_heuristics import Josh
 from trading.backtest.backtest_oanda_broker import BacktestBroker
-from trading.backtest.base import BacktestTradingStrategy
+from trading.backtest.backtest_runner import BacktestTradingStrategyRunner
 
 
 def main():
 
-    base_pair =  {'currency': 'usd', 'starting_units': 1000}
+    base_pair = {'currency': 'usd', 'starting_units': 1000}
     quote_pair = {'currency': 'eur', 'starting_units': 0}
     instrument = INSTRUMENT_EUR_USD
     backtest_length = 5000
@@ -19,7 +19,7 @@ def main():
         'quote_pair': quote_pair
     }
 
-    strategy = BacktestTradingStrategy(config, broker, backtest_length)
+    strategy = BacktestTradingStrategyRunner(config, broker, backtest_length)
     strategy.tick()
 
 
