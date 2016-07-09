@@ -3,8 +3,12 @@ from collections import namedtuple
 
 Order = namedtuple('Order', ('instrument', 'units', 'side', 'type', 'price', 'expiry'))
 
+
 class Broker(object):
     __metaclass__ = ABCMeta
+
+    def __init__(self, instrument):
+        self.instrument = instrument
 
     @abstractmethod
     def get_account_information(self):
@@ -19,9 +23,9 @@ class Broker(object):
         raise NotImplementedError
 
     @abstractmethod
-    def get_current_price_data(self, instrument):
+    def get_current_price_data(self):
         raise NotImplementedError
 
     @abstractmethod
-    def get_historical_price_data(self, instrument, count=30, granularity='D'):
+    def get_historical_price_data(self, count, granularity):
         raise NotImplementedError

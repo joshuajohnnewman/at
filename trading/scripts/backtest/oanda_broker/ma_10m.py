@@ -1,7 +1,7 @@
 from trading.constants.instrument import INSTRUMENT_EUR_USD
 from trading.algorithms.moving_average_crossover import MAC
 from trading.backtest.backtest_oanda_broker import BacktestBroker
-from trading.backtest.base import BacktestTradingStrategy
+from trading.backtest.backtest_runner import BacktestTradingStrategyRunner
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
         'strategy_id': strategy_id
     }
 
-    strategy = BacktestTradingStrategy(config, broker, 5000)
+    strategy = BacktestTradingStrategyRunner(config, broker, 5000)
     strategy.tick()
 
 

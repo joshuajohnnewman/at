@@ -18,15 +18,17 @@ class LiveTradingStrategyRunner(TradingStrategyRunner):
                 self.update_strategy_portfolio(order_responses)
                 self.remove_recorded_orders(order_responses)
 
-                historical_market_data = self.broker.get_historical_price_data(self.instrument,
-                                                                               self.strategy.data_window, granularity=self.strategy.granularity)
+                historical_market_data = self.broker.get_historical_price_data(self.strategy.data_window,
+                                                                               granularity=self.strategy.granularity)
 
-                current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
+                current_market_data = self.broker.get_current_price_data()
 
                 self.strategy.analyze_data({
                     'historical': historical_market_data,
                     'current': current_market_data
                 })
+
+                self.strategy.log_strategy_data()
 
                 order_decision, market_order = self.strategy.make_decision()
 

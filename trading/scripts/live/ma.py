@@ -1,7 +1,7 @@
 from trading.constants.instrument import INSTRUMENT_EUR_USD
 from trading.algorithms.moving_average_crossover import MAC
 from trading.broker.oanda import OandaBroker
-from trading.strategy_runner.base import LiveTradingStrategy
+from trading.live.live_runner import LiveTradingStrategyRunner
 
 
 def main():
@@ -10,7 +10,7 @@ def main():
     base_pair = {'currency': 'usd', 'starting_units': 1000}
     quote_pair = {'currency': 'eur', 'starting_units': 0}
     instrument = INSTRUMENT_EUR_USD
-    broker = OandaBroker()
+    broker = OandaBroker(instrument)
 
     config = {
         'strategy_name': MAC.name,
@@ -23,7 +23,7 @@ def main():
         'strategy_id': strategy_id
     }
 
-    strategy = LiveTradingStrategy(config, broker)
+    strategy = LiveTradingStrategyRunner(config, broker)
     strategy.tick()
 
 

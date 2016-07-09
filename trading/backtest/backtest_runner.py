@@ -2,7 +2,7 @@ import time
 
 from collections import defaultdict
 
-from trading.algorithms import ORDER_SELL
+from trading.constants.order import SIDE_SELL
 from trading.constants.price_data import PRICE_ASK
 from trading.live.exceptions import LiveTradingException, KeyboardInterruptMessage
 from trading.strategy_runner.base import TradingStrategyRunner
@@ -28,12 +28,11 @@ class BacktestTradingStrategyRunner(TradingStrategyRunner):
 
                 self.update_strategy_portfolio(order_responses)
 
-                historical_market_data = self.broker.get_historical_price_data(self.instrument,
-                                                                               count=self.strategy.data_window,
+                historical_market_data = self.broker.get_historical_price_data(count=self.strategy.data_window,
                                                                                granularity=self.strategy.granularity,
                                                                                tick=self.tick_num)
 
-                current_market_data = self.broker.get_current_price_data(instrument=self.instrument, tick=self.tick_num)
+                current_market_data = self.broker.get_current_price_data(tick=self.tick_num)
 
                 self.strategy.analyze_data({
                     'historical': historical_market_data,
@@ -71,8 +70,8 @@ class BacktestTradingStrategyRunner(TradingStrategyRunner):
         if self.invested:
             current_market_data = self.broker.get_current_price_data(instrument=self.instrument, tick=self.tick_num)
             asking_price = normalize_current_price_data(current_market_data, target_field=PRICE_ASK)
-            sell_order = self.strategy.make_order(asking_price, order_side=ORDER_SELL)
-            order_response = self.make_market_order(ORDER_SELL, sell_order)
+            sell_order = self.strategy.make_order(asking_price, order_side=SIDE_SELL)
+            order_response = self.make_market_order(SIDE_SELL, sell_order)
             self.update_orders(order_response)
 
         serialized_strategy = self.strategy.serialize()

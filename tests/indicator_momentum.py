@@ -2,7 +2,8 @@ import random
 import unittest
 
 from trading.indicators.exceptions import TalibIntervalException
-from trading.indicators.momentum_indicators import calc_average_directional_movement_index, calc_average_directional_movement_index_rating
+from trading.indicators.momentum_indicators import calc_average_directional_movement_index, \
+    calc_average_directional_movement_index_rating
 
 
 class MomentumIndicatorTests(unittest.TestCase):

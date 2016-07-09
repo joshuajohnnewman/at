@@ -16,12 +16,12 @@ from trading.util.transformations import normalize_current_price_data
 class TradingStrategyRunner(object):
     __metaclass__ = ABCMeta
 
+    _db = None
+    _logger = None
+
     orders = {}
     invested = False
     tick_num = 0
-
-    _db = None
-    _logger = None
 
     def __init__(self, strategy_config, broker):
         self.num_orders = 0
@@ -66,14 +66,15 @@ class TradingStrategyRunner(object):
 
         if self.invested:
             current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
-            asking_price =  normalize_current_price_data(current_market_data, target_field=PRICE_ASK)
+            asking_price = normalize_current_price_data(current_market_data, target_field=PRICE_ASK)
             sell_order = self.strategy.make_order(asking_price, order_side=SIDE_SELL)
             order_response = self.make_market_order(SIDE_SELL, sell_order)
             self.update_orders(order_response)
 
         serialized_strategy = self.strategy.serialize()
         strategy_id = self.strategy.strategy_id
-        session = self.make_trading_session_info(self.start_time, end_time, self.tick_num, self.num_orders, shutdown_cause)
+        session = self.make_trading_session_info(self.start_time, end_time, self.tick_num, self.num_orders,
+                                                 shutdown_cause)
 
         query = {'_id': strategy_id}
         update = {'$set': {'strategy_data': serialized_strategy}, '$push': {'sessions': session}}
@@ -109,8 +110,7 @@ class TradingStrategyRunner(object):
     def make_market_order(self, order_decision, market_order):
         SUPPORTED_ORDER_TYPES = (SIDE_SELL, SIDE_BUY)
 
-
-        if order_decision is not SIDE_STAY and market_order.units <=0:
+        if order_decision is not SIDE_STAY and market_order.units <= 0:
             return {}
 
         elif order_decision in SUPPORTED_ORDER_TYPES:
@@ -127,15 +127,16 @@ class TradingStrategyRunner(object):
         return order_response
 
     def update_orders(self, order_response):
+        if not order_response:
+            return
+
         trades_opened = order_response.get('tradeOpened')
         trades_closed = order_response.get('tradesClosed')
         price = order_response.get('price')
 
-        if not order_response:
-            return
-
-        elif trades_opened or trades_closed:
-            portfolio_update = normalize_portfolio_update({'opened': trades_opened, 'closed': trades_closed, 'price': price})
+        if trades_opened or trades_closed:
+            portfolio_update = normalize_portfolio_update({'opened': trades_opened, 'closed': trades_closed,
+                                                           'price': price})
             self.strategy.update_portfolio(portfolio_update)
 
         else:

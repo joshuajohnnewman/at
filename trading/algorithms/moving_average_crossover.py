@@ -24,7 +24,7 @@ class MAC(Strategy):
         else:
             config = self.load_strategy(strategy_id)
 
-        super(MAC, self).__init__(config)
+        super(MAC, self).__init__(strategy_id, config)
         self.strategy_id = strategy_id
         self.invested = False
 
@@ -60,8 +60,6 @@ class MAC(Strategy):
         self.strategy_data['short_term_ma'] = short_ma
         self.strategy_data['long_term_ma'] = long_ma
 
-        self.log_strategy_data()
-
     def make_decision(self):
         asking_price = self.strategy_data['asking_price']
         short_term = self.strategy_data['short_term_ma']
@@ -83,11 +81,11 @@ class MAC(Strategy):
 
             else:
                 return decision, None
-        except Exception as e:
+        except ValueError as e:
             self.logger.error(e)
             return decision, order
 
-        if order.units <=0:
+        if order.units <= 0:
             decision = SIDE_STAY
             order = None
 

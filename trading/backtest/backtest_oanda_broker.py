@@ -36,7 +36,7 @@ class BacktestBroker(Broker, EndpointsMixin):
         ending_candle = self._current_tick + count
 
         return {
-            'candles': self._historic_data['candles'][starting_candle : ending_candle],
+            'candles': self._historic_data['candles'][starting_candle: ending_candle],
             'instrument': self._historic_data['meta_data']['instrument'],
             'granularity': self._historic_data['meta_data']['granularity']
         }
@@ -70,19 +70,19 @@ class BacktestBroker(Broker, EndpointsMixin):
         self.account.make_order(order)
 
         order_confirmation = {
-            "instrument" : order.instrument,
-            "time" : datetime.datetime.now(),
-            "price" : order.price,
-            "tradeOpened" : {
-                "id" : str(ObjectId()),
-                "units" : order.units,
-                "side" : order.side,
-                "takeProfit" : 0,
-                "stopLoss" : 0,
-                "trailingStop" : 0
+            "instrument": order.instrument,
+            "time": datetime.datetime.now(),
+            "price": order.price,
+            "tradeOpened": {
+                "id": str(ObjectId()),
+                "units": order.units,
+                "side": order.side,
+                "takeProfit": 0,
+                "stopLoss": 0,
+                "trailingStop": 0
             },
-            "tradesClosed" : [],
-            "tradeReduced" : {}
+            "tradesClosed": [],
+            "tradeReduced": {}
         }
 
         return order_confirmation
@@ -108,6 +108,6 @@ class BacktestBroker(Broker, EndpointsMixin):
         import oandapy
 
         if self._oanda is None:
-            self._oanda = oandapy.API(environment=os.environ['OANDA_ENV'], access_token=os.environ['OANDA_ACCESS_TOKEN'])
+            self._oanda = oandapy.API(environment=os.environ['OANDA_ENV'],
+                                      access_token=os.environ['OANDA_ACCESS_TOKEN'])
         return self._oanda
-

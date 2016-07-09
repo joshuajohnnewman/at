@@ -13,18 +13,19 @@ class OandaBroker(Broker, EndpointsMixin):
     _account_id = None
     _oanda = None
 
+    def __init__(self, instrument):
+        super(OandaBroker, self).__init__(instrument)
+
     def get_account_information(self):
         account_information = self.oanda.get_account(self.account_id)
         return account_information
 
-    def get_current_price_data(self, instrument):
-        if not isinstance(instrument, list):
-            instrument = [instrument]
-        broker_response = self.oanda.get_prices(instruments=instrument)
+    def get_current_price_data(self):
+        broker_response = self.oanda.get_prices(instruments=[self.instrument])
         return broker_response
 
-    def get_historical_price_data(self, instrument, count=INTERVAL_FORTY_CANDLES, granularity=GRANULARITY_DAY):
-        broker_response = self.oanda.get_history(instrument=instrument, count=count, granularity=granularity)
+    def get_historical_price_data(self, count=INTERVAL_FORTY_CANDLES, granularity=GRANULARITY_DAY):
+        broker_response = self.oanda.get_history(instrument=self.instrument, count=count, granularity=granularity)
         return broker_response
 
     def get_order(self, order_id):
@@ -33,13 +34,13 @@ class OandaBroker(Broker, EndpointsMixin):
 
     def make_order(self, order):
         order_confirmation = self.oanda.create_order(self.account_id,
-                                                 instrument=order.instrument,
-                                                 units=order.units,
-                                                 side=order.side,
-                                                 type=order.type,
-                                                 price=order.price,
-                                                 expiry=order.expiry
-                                                 )
+                                                     instrument=order.instrument,
+                                                     units=order.units,
+                                                     side=order.side,
+                                                     type=order.type,
+                                                     price=order.price,
+                                                     expiry=order.expiry
+                                                    )
 
         return order_confirmation
 
