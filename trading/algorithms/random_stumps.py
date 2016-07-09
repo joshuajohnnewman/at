@@ -5,19 +5,25 @@ from bson import ObjectId
 
 from trading.algorithms.base import Strategy
 from trading.constants.granularity import GRANULARITY_TEN_MINUTE
+from trading.constants.order import SIDE_BUY, SIDE_SELL, SIDE_STAY
+from trading.constants.interval import INTERVAL_FORTY_CANDLES
+from trading.constants.price_data import PRICE_ASK, PRICE_ASK_CLOSE, PRICE_ASK_HIGH, PRICE_ASK_LOW
 from trading.classifier.random_forest import RFClassifier
 from trading.indicators.overlap_studies import calc_moving_average
+from trading.indicators.misc import calc_chandalier_exits
+from trading.indicators.price_transformation import calc_standard_deviation
 from trading.util.transformations import normalize_price_data, normalize_current_price_data
 
 
 class RandomStumps(Strategy):
     name = 'RandomStumps'
 
+    _classifier = None
+
     features = ['asking_price', 'long_candle_exit', 'short_candle_exit', 'lower_bound_ma', 'upper_bound_ma']
     granularity = GRANULARITY_TEN_MINUTE
     long_exit_sensitivity = 10
     short_exit_sensitivity = 5
-    _classifier = None
 
     def __init__(self, config):
         strategy_id = config.get('strategy_id')
@@ -75,8 +81,6 @@ class RandomStumps(Strategy):
         self.strategy_data['lower_bound_ma'] = lower
         self.strategy_data['upper_bound_ma'] = upper
 
-        self.log_strategy_data()
-
     def make_decision(self):
         X = self.strategy_data
 
@@ -85,7 +89,7 @@ class RandomStumps(Strategy):
 
         if decision in (SIDE_BUY, SIDE_SELL):
             current_price = self.strategy_data['asking_price']
-            order =  self.make_order(current_price, decision)
+            order = self.make_order(current_price, decision)
         else:
             order = None
 

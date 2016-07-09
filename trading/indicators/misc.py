@@ -49,7 +49,7 @@ def calc_chandalier_exits(close, high, low, volatility_threshold=3,
     month_high = get_period_high(high, interval=required_interval)
     month_low = get_period_low(low, interval=required_interval)
 
-    atr = calc_average_true_range(close, high, low, target_interval) # original interval
+    atr = calc_average_true_range(close, high, low, target_interval)  # original interval
 
     long_exit = month_high - (atr * volatility_threshold)
     short_exit = month_low + (atr * volatility_threshold)

@@ -15,6 +15,8 @@ from trading.util.log import Logger
 class Strategy(object):
     __metaclass__ = ABCMeta
 
+    name = 'Base_Strategy'
+
     _db = None
     _logger = None
 
@@ -22,8 +24,6 @@ class Strategy(object):
     strategy_data = {}
     data_window = INTERVAL_FORTY_CANDLES
     granularity = GRANULARITY_HOUR
-
-    name = 'Base_Strategy'
 
     def __init__(self, strategy_id, strategy_config):
         self.strategy_id = strategy_id
@@ -63,7 +63,7 @@ class Strategy(object):
         self.logger.debug('Strategy Indicator Data:')
         for indicator in self.strategy_data:
             self.logger.debug('Indicator {indicator} with value {value}'
-                             .format(indicator=indicator, value=self.strategy_data[indicator]))
+                              .format(indicator=indicator, value=self.strategy_data[indicator]))
 
     def load_strategy(self, strategy_id):
         query = {'_id': ObjectId(strategy_id)}
@@ -87,9 +87,8 @@ class Strategy(object):
         side = order_side
         order_type = ORDER_MARKET
         price = asking_price
-        expiry = trade_expire
 
-        return MarketOrder(instrument, units, side, order_type, price, expiry)
+        return MarketOrder(instrument, units, side, order_type, price, trade_expire)
 
     def serialize(self):
 

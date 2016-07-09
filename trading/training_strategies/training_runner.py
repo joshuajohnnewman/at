@@ -1,15 +1,17 @@
-import copy
-
 from bson import ObjectId
-
-from trading.live.exceptions import LiveTradingException, KeyboardInterruptMessage
+from copy import copy
 
 from trading.classifier import CLASSIFIERS
+from trading.live.exceptions import LiveTradingException, KeyboardInterruptMessage
 from trading.strategy_runner.base import TradingStrategyRunner
+
+
+TRAINING_PERIOD_PADDING = 1000
 
 
 class TrainingStrategyRunner(TradingStrategyRunner):
     _logger = None
+
     training_data = {}
 
     def __init__(self, strategy_config, broker, num_training_points):
@@ -22,7 +24,8 @@ class TrainingStrategyRunner(TradingStrategyRunner):
         self.classifier_name = classifier_name
         self.classifier = CLASSIFIERS[classifier_name](classifier_config)
 
-        broker.get_backtest_price_data(self.instrument, num_training_points + 1000, self.strategy.granularity)
+        broker.get_backtest_price_data(self.instrument, num_training_points + TRAINING_PERIOD_PADDING,
+                                       self.strategy.granularity)
 
     def tick(self):
         while self.tick_num < self.num_training_points:
@@ -46,13 +49,15 @@ class TrainingStrategyRunner(TradingStrategyRunner):
                     'current': current_market_data
                 })
 
+                self.strategy.log_strategy_data()
+
                 order_decision, market_order = self.strategy.make_decision()
 
                 strategy_data = self.strategy.strategy_data
                 strategy_data['decision'] = order_decision
                 self.logger.info('Strat Data', data=strategy_data)
                 self.logger.info('Strat Data Tick', data=self.tick_num)
-                self.training_data[self.tick_num] = copy.copy(strategy_data)
+                self.training_data[self.tick_num] = copy(strategy_data)
 
                 order_response = self.make_market_order(order_decision, market_order)
 
@@ -74,7 +79,7 @@ class TrainingStrategyRunner(TradingStrategyRunner):
                 break
 
     def train_classifier(self):
-        self.logger.info('Training')
+        self.logger.info('Training Classifier')
         X, y = self.classifier.prepare_training_data(self.training_data)
         self.classifier.train(X, y)
 

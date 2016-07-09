@@ -1,17 +1,17 @@
 from trading.constants.instrument import INSTRUMENT_EUR_USD
 from trading.algorithms.simple_pattern_matcher import PatternMatch
 from trading.broker.oanda import OandaBroker
-from trading.strategy_runner.base import LiveTradingStrategy
+from trading.live.live_runner import LiveTradingStrategyRunner
 
 
 def main():
     classifier_id = '574db8431689015f6096544c'
 
-    broker = OandaBroker()
     base_pair =  {'currency': 'usd'}
     quote_pair = {'currency': 'eur'}
 
     instrument = INSTRUMENT_EUR_USD
+    broker = OandaBroker(instrument)
     classifier_config = {'classifier_id': classifier_id}
 
     strategy_config = {
@@ -22,7 +22,7 @@ def main():
         'classifier_config': classifier_config
     }
 
-    strategy = LiveTradingStrategy(strategy_config, broker)
+    strategy = LiveTradingStrategyRunner(strategy_config, broker)
     strategy.tick()
 
 

@@ -11,4 +11,9 @@ def normalize_current_price_data(price_data, target_field=PRICE_ASK):
 
 
 def get_last_candle_data(price_data):
+    """
+    Assumes the last (latest) candle is at position (len - 1)
+    :param price_data:
+    :return:
+    """
     return price_data[-1]

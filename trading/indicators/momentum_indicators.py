@@ -79,8 +79,10 @@ def calc_commodity_channel_index():
 def calc_chande_momentum_oscillator():
     pass
 
+
 def calc_directional_movement_index():
     pass
+
 
 def calc_moving_average_convergence_divergence():
     pass
@@ -97,6 +99,7 @@ def calc_money_flow_index():
 def calc_minus_directional_indicator():
     pass
 
+
 def calc_minus_directional_movement():
     pass
 
@@ -108,12 +111,14 @@ def calc_momentum():
 def calc_plus_directional_indicator():
     pass
 
+
 def calc_plus_directional_movement():
     pass
 
 
 def calc_percetntage_price_oscillator():
     pass
+
 
 def calc_rate_of_change():
     pass
@@ -145,6 +150,7 @@ def calc_schotastic():
 
 def calc_schotastic_fast():
     pass
+
 
 def calc_schotastic_relative_strength_index():
     pass

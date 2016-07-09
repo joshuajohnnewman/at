@@ -16,8 +16,11 @@ class Portfolio:
         self.percent_profit = 0
 
     def __repr__(self):
-        representation = 'Instrument {instrument} Profit {profit} Percent Gain {percent_profit} Base Pair: {pa} Quote Pair: {pb}'\
-            .format(instrument=self.instrument, profit=self.profit, percent_profit=self.percent_profit, pa=self.base_pair, pb=self.quote_pair)
+        representation = 'Instrument {instrument} Profit {profit} Percent Gain {percent_profit} Base Pair: {pa} ' \
+                         'Quote Pair: {pb}'\
+            .format(instrument=self.instrument, profit=self.profit, percent_profit=self.percent_profit,
+                    pa=self.base_pair, pb=self.quote_pair)
+
         return representation
 
     def serialize(self):
@@ -36,7 +39,8 @@ class Portfolio:
         self.update_open_positions(price, opened)
         self.update_closed_positions(price, closed)
 
-        hypothetical_profit_total = ((self.quote_pair.tradeable_units / price) + self.base_pair.tradeable_units) - self.base_pair.starting_units
+        hypothetical_profit_total = ((self.quote_pair.tradeable_units / price) + self.base_pair.tradeable_units) - \
+                                    self.base_pair.starting_units
 
         self.profit = hypothetical_profit_total
         self.percent_profit = (self.profit / self.base_pair.starting_units) * 100
@@ -44,33 +48,27 @@ class Portfolio:
     def update_open_positions(self, price, opened_orders):
         """
         Buy
-        :param price:
-        :param opened_orders:
-        :return:
         """
         for order in opened_orders:
             self.logger.debug('Opened Order', data=order)
-            units_bought = order['units'] # Number of units bought
+            units_bought = order['units']  # Number of units bought
 
             trade_cost = units_bought * price
 
             self.logger.info('Updating portfolio for open position trade with old portfolio {portfolio}'
                              .format(portfolio=self), data=order)
 
-            self.base_pair.tradeable_units -=trade_cost
-            self.quote_pair.tradeable_units +=units_bought
+            self.base_pair.tradeable_units -= trade_cost
+            self.quote_pair.tradeable_units += units_bought
 
             self.logger.info('New Portfolio value {portfolio}'.format(portfolio=self), data=order)
 
     def update_closed_positions(self, price, closed_orders):
         """
         Sell
-        :param price:
-        :param closed_orders:
-        :return:
         """
         for order in closed_orders:
-            units_sold = order['units'] # Number of units sold
+            units_sold = order['units']  # Number of units sold
             self.logger.debug('Closed Order', data=order)
 
             self.logger.info('Updating portfolio for closed position trade with old portfolio {portfolio}'
@@ -78,8 +76,8 @@ class Portfolio:
 
             trade_gain = units_sold / price
 
-            self.quote_pair.tradeable_units -=units_sold
-            self.base_pair.tradeable_units +=trade_gain
+            self.quote_pair.tradeable_units -= units_sold
+            self.base_pair.tradeable_units += trade_gain
 
             self.logger.info('New Portfolio value {portfolio}'.format(portfolio=self), data=order)
 

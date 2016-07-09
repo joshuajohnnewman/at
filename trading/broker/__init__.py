@@ -9,6 +9,7 @@ BROKERS = {
     OandaBroker.name: OandaBroker
 }
 
+
 def initialize_broker(serialized_broker):
     broker_name = serialized_broker['name']
     broker = BROKERS[broker_name]()

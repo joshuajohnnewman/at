@@ -37,8 +37,8 @@ class Candle(Resource):
             traceback.print_exc(file=sys.stdout)
             return abort(status=500)
 
-        return {'candles': candles, 'chart_id': chart_data['id'], 'title': title, 'y_params': y_params, 'x_params': x_params}
-
+        return {'candles': candles, 'chart_id': chart_data['id'], 'title': title, 'y_params': y_params,
+                'x_params': x_params}
 
     def post(self):
         logging.info('At Candle POST Endpoint')

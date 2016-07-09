@@ -30,10 +30,11 @@ def calc_kaufman_moving_average():
 
 def calc_moving_average(data, interval):
     """
+    Calculates moving average over specified interval
     First data point is earliest
-    :param data:
-    :param interval:
-    :return:
+    :param data: list of data points
+    :param interval: int representing chosen interval (not granularity)
+    :return: moving avg as numpy 64-float
     """
     if len(data) < interval:
         raise TalibIntervalException

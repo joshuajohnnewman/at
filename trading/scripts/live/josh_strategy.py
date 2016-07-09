@@ -5,12 +5,12 @@ from trading.live.live_runner import LiveTradingStrategyRunner
 
 
 def main():
-    broker = OandaBroker()
     strategy_id = '571d2ec21689011340cce43f'
 
-    base_pair =  {'currency': 'usd'}
+    base_pair = {'currency': 'usd'}
     quote_pair = {'currency': 'eur'}
     instrument = INSTRUMENT_EUR_USD
+    broker = OandaBroker(instrument)
 
     config = {
         'strategy_name': Josh.name,
