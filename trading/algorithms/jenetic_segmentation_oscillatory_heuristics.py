@@ -53,8 +53,6 @@ class Josh(Strategy):
         current_market_data = market_data['current']
         historical_market_data = market_data['historical']
 
-        self.logger.info('Current', current_market_data)
-        self.logger.info('Historical', historical_market_data)
         historical_candle_data = historical_market_data['candles']
         asking_price = normalize_current_price_data(current_market_data, PRICE_ASK)
 

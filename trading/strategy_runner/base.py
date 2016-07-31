@@ -65,11 +65,7 @@ class TradingStrategyRunner(object):
         end_time = time.time()
 
         if self.invested:
-            current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
-            asking_price = normalize_current_price_data(current_market_data, target_field=PRICE_ASK)
-            sell_order = self.strategy.make_order(asking_price, order_side=SIDE_SELL)
-            order_response = self.make_market_order(SIDE_SELL, sell_order)
-            self.update_orders(order_response)
+            self.logger.info('Invested, Not Closing out position')
 
         serialized_strategy = self.strategy.serialize()
         strategy_id = self.strategy.strategy_id
