@@ -17,3 +17,23 @@ def get_last_candle_data(price_data):
     :return:
     """
     return price_data[-1]
+
+
+def get_candle_triplet(historical_price_data, current_price_data):
+    print('historical', historical_price_data)
+    print('current', current_price_data)
+    current_candle = current_price_data['prices'][0]
+    historical_candles = historical_price_data['candles']
+    trigger_candle = historical_candles[-1]
+    first_candle = historical_candles[-2]
+
+    return {
+        'previous': first_candle,
+        'trigger': trigger_candle,
+        'current': current_candle
+    }
+
+
+
+
+

@@ -12,18 +12,13 @@ def main():
     instrument = INSTRUMENT_EUR_USD
     broker = OandaBroker(instrument)
 
-    config = {
-        'strategy_name': Josh.name,
-        'instrument': instrument,
-        'base_pair': base_pair,
-        'quote_pair': quote_pair
-    }
+    strategy_name = Josh.name
 
-    id_config = {
-        'strategy_id': strategy_id
-    }
+    if strategy_id is None:
+        strategy = LiveTradingStrategyRunner(broker, instrument, strategy_name, base_pair, quote_pair)
+    else:
+        strategy = LiveTradingStrategyRunner(broker, instrument, strategy_name, base_pair, quote_pair, strategy_id)
 
-    strategy = LiveTradingStrategyRunner(config, broker)
     strategy.tick()
 
 

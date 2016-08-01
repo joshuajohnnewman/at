@@ -1,7 +1,7 @@
 import math
-from decimal import Decimal
 
 from bson import ObjectId
+from decimal import Decimal
 
 from trading.algorithms.base import Strategy
 from trading.constants.granularity import GRANULARITY_TEN_MINUTE
@@ -25,23 +25,17 @@ class RandomStumps(Strategy):
     long_exit_sensitivity = 10
     short_exit_sensitivity = 5
 
-    def __init__(self, config):
-        strategy_id = config.get('strategy_id')
-
+    def __init__(self, instrument=None, base_pair=None, quote_pair=None, classifier_id=None, strategy_id=None):
         if strategy_id is None:
             strategy_id = ObjectId()
         else:
-            config = self.load_strategy(strategy_id)
+            instrument, base_pair, quote_pair, classifier_id = self.load_strategy(strategy_id)
 
-        super(RandomStumps, self).__init__(strategy_id, config)
-
-        self.classifier_config = config['classifier_config']
-        self.classifier_config['features'] = self.features
-
+        super(RandomStumps, self).__init__(strategy_id, instrument, base_pair, quote_pair, classifier_id)
         self.invested = False
 
     def calc_units_to_buy(self, current_price):
-        base_pair_tradeable_units = self.portfolio.base_pair.tradeable_units
+        base_pair_tradeable_units = self.portfolio.base_pair.tradeable_units * 0.05
         num_units = math.floor(base_pair_tradeable_units / current_price)
         return int(num_units)
 
@@ -110,5 +104,5 @@ class RandomStumps(Strategy):
     @property
     def classifier(self):
         if self._classifier is None:
-            self._classifier = RFClassifier(self.classifier_config)
+            self._classifier = RFClassifier(self.classifier_id, self.features)
         return self._classifier

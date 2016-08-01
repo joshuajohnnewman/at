@@ -1,6 +1,6 @@
 import datetime
-from abc import abstractmethod, ABCMeta
 
+from abc import abstractmethod, ABCMeta
 from bson import ObjectId
 
 from trading.account.portfolio import Portfolio
@@ -25,13 +25,10 @@ class Strategy(object):
     data_window = INTERVAL_FORTY_CANDLES
     granularity = GRANULARITY_HOUR
 
-    def __init__(self, strategy_id, strategy_config):
-        self.strategy_id = strategy_id
-        instrument = strategy_config['instrument']
-        base_pair = strategy_config['base_pair']
-        quote_pair = strategy_config['quote_pair']
-
+    def __init__(self, strategy_id, instrument, base_pair, quote_pair, classifier_id=None):
+        self.classifier_id = classifier_id
         self.instrument = instrument
+        self.strategy_id = strategy_id
         self.portfolio = Portfolio(instrument, base_pair, quote_pair)
 
         self.logger.info('Starting Portfolio', data=self.portfolio)
@@ -56,6 +53,21 @@ class Strategy(object):
     def allocate_tradeable_amount(self):
         raise NotImplementedError
 
+    def load_strategy(self, strategy_id):
+        query = {'_id': ObjectId(strategy_id)}
+
+        strategy = self.db.strategies.find_one(query)
+
+        try:
+            strategy_data = strategy['strategy_data']
+            instrument = strategy_data['instrument']
+            base_pair = strategy_data['base_pair']
+            quote_pair = strategy_data['quote_pair']
+        except KeyError:
+            raise ValueError  # Todo make strategy specific exceptions
+
+        return instrument, base_pair, quote_pair
+
     def update_portfolio(self, order_responses):
         self.portfolio.update(order_responses)
 
@@ -64,13 +76,6 @@ class Strategy(object):
         for indicator in self.strategy_data:
             self.logger.debug('Indicator {indicator} with value {value}'
                               .format(indicator=indicator, value=self.strategy_data[indicator]))
-
-    def load_strategy(self, strategy_id):
-        query = {'_id': ObjectId(strategy_id)}
-        strategy = self.db.strategies.find_one(query)
-        strategy_data = strategy['strategy_data']
-        config = strategy_data['config']
-        return config
 
     def make_order(self, asking_price, order_side=SIDE_BUY):
         trade_expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)

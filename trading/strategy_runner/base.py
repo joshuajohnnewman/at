@@ -23,14 +23,15 @@ class TradingStrategyRunner(object):
     invested = False
     tick_num = 0
 
-    def __init__(self, strategy_config, broker):
+    def __init__(self, broker, instrument, strategy_name, base_pair, quote_pair, strategy_id, classifier_id):
         self.num_orders = 0
         self.start_time = time.time()
 
         self.broker = broker
         account_information = self.broker.get_account_information()
 
-        self.strategy = initialize_strategy(strategy_config, account_information)
+        self.strategy = initialize_strategy(account_information, instrument, strategy_name, base_pair, quote_pair,
+                                            strategy_id, classifier_id)
         self.interval = self.strategy.interval
         self.instrument = self.strategy.instrument
 

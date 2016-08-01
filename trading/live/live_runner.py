@@ -5,8 +5,9 @@ from trading.strategy_runner.base import TradingStrategyRunner
 
 
 class LiveTradingStrategyRunner(TradingStrategyRunner):
-    def __init__(self, strategy_config, broker):
-        super(LiveTradingStrategyRunner, self).__init__(strategy_config, broker)
+    def __init__(self, broker, instrument, strategy_name, base_pair, quote_pair, strategy_id=None, classifier_id=None):
+        super(LiveTradingStrategyRunner, self).__init__(broker, instrument, strategy_name, base_pair, quote_pair,
+                                                        strategy_id, classifier_id)
 
     def tick(self):
         while True:
