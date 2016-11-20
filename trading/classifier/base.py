@@ -22,10 +22,10 @@ class Classifier:
     _db = None
     _logger = None
 
-    def __init__(self, config):
-        pass
+    def __init__(self, classifier_id):
+        self.classifier_id = classifier_id
 
-    def passes_filter(self, datum):
+    def passes_filter(self, decision):
         return True
 
     @abstractmethod

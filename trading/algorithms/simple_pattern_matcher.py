@@ -10,7 +10,8 @@ from trading.constants.granularity import GRANULARITY_TEN_MINUTE
 from trading.classifier import RFClassifier
 from trading.constants.interval import INTERVAL_ONE_HUNDRED_CANDLES
 from trading.indicators.momentum_indicators import calc_average_directional_movement_index_rating
-from trading.util.transformations import normalize_price_data, normalize_current_price_data, get_last_candle_data
+from trading.util.transformations import normalize_price_data, normalize_current_price_data, get_last_candle_data, \
+    get_candle_triplet
 
 
 TREND_POSITIVE = 'positive'
@@ -29,20 +30,17 @@ class PatternMatch(Strategy):
     required_trend_strength = 25
     trend_interval = 30
 
-    def __init__(self, config):
-        strategy_id = config.get('strategy_id')
-
+    def __init__(self, instrument=None, base_pair=None, quote_pair=None, strategy_id=None, classifier_id=None):
         if strategy_id is None:
             strategy_id = ObjectId()
         else:
-            config = self.load_strategy(strategy_id)
+            instrument, base_pair, quote_pair = self.load_strategy(strategy_id)
 
-        super(PatternMatch, self).__init__(strategy_id, config)
-        self.classifier_config = config['classifier_config']
+        super(PatternMatch, self).__init__(strategy_id, instrument, base_pair, quote_pair, classifier_id)
         self.invested = False
 
     def calc_units_to_buy(self, current_price):
-        base_pair_units = self.portfolio.base_pair.tradeable_units
+        base_pair_units = self.portfolio.base_pair.tradeable_units * 0.05
         num_units = math.floor(base_pair_units / current_price)
         return int(num_units)
 
@@ -60,6 +58,10 @@ class PatternMatch(Strategy):
         current_market_data = market_data['current']
         historical_market_data = market_data['historical']
         historical_candle_data = historical_market_data['candles']
+
+        candle_triplet = get_candle_triplet(historical_market_data, current_market_data)
+
+        self.logger.info('Candle Triplet', candle_triplet)
 
         asking_price = normalize_current_price_data(current_market_data, PRICE_ASK)
 
@@ -103,13 +105,17 @@ class PatternMatch(Strategy):
         decision = SIDE_STAY
         order = None
 
-        if trend == TREND_POSITIVE and volume > self.required_volume and trend_strength > self.required_trend_strength \
+        if trend == TREND_POSITIVE \
+                and volume > self.required_volume \
+                and trend_strength > self.required_trend_strength \
                 and pattern == SIDE_BUY:
 
             order = self.make_order(asking_price, SIDE_BUY)
             decision = SIDE_BUY
 
-        elif trend == TREND_NEGATIVE and volume > self.required_volume and trend_strength > self.required_trend_strength \
+        elif trend == TREND_NEGATIVE \
+                and volume > self.required_volume \
+                and trend_strength > self.required_trend_strength \
                 and pattern == SIDE_SELL:
 
             order = self.make_order(asking_price, SIDE_SELL)
@@ -131,10 +137,11 @@ class PatternMatch(Strategy):
 
         return trend_direction, trend_strength
 
+
     @property
     def classifier(self):
         if self._classifier is None:
-            self._classifier = RFClassifier(self.classifier_config)
+            self._classifier = RFClassifier(self.classifier_id, self.features)
         return self._classifier
 
 

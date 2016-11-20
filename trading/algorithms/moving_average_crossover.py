@@ -1,7 +1,7 @@
 import math
-from decimal import Decimal
 
 from bson import ObjectId
+from decimal import Decimal
 
 from trading.algorithms.base import Strategy
 from trading.constants.price_data import PRICE_ASK, PRICE_ASK_CLOSE
@@ -16,20 +16,17 @@ class MAC(Strategy):
 
     crossover_threshold = 0.001
 
-    def __init__(self, config):
-        strategy_id = config.get('strategy_id')
-
+    def __init__(self, instrument=None, base_pair=None, quote_pair=None, strategy_id=None):
         if strategy_id is None:
             strategy_id = ObjectId()
         else:
-            config = self.load_strategy(strategy_id)
+            instrument, base_pair, quote_pair = self.load_strategy(strategy_id)
 
-        super(MAC, self).__init__(strategy_id, config)
-        self.strategy_id = strategy_id
+        super(MAC, self).__init__(strategy_id, instrument, base_pair, quote_pair)
         self.invested = False
 
     def calc_units_to_buy(self, current_price):
-        base_pair_tradeable = self.portfolio.base_pair.tradeable_units
+        base_pair_tradeable = self.portfolio.base_pair.tradeable_units * 0.01
         num_units = math.floor(base_pair_tradeable / current_price)
         return int(num_units)
 

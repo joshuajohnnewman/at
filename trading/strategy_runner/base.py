@@ -23,14 +23,15 @@ class TradingStrategyRunner(object):
     invested = False
     tick_num = 0
 
-    def __init__(self, strategy_config, broker):
+    def __init__(self, broker, instrument, strategy_name, base_pair, quote_pair, strategy_id, classifier_id):
         self.num_orders = 0
         self.start_time = time.time()
 
         self.broker = broker
         account_information = self.broker.get_account_information()
 
-        self.strategy = initialize_strategy(strategy_config, account_information)
+        self.strategy = initialize_strategy(account_information, instrument, strategy_name, base_pair, quote_pair,
+                                            strategy_id, classifier_id)
         self.interval = self.strategy.interval
         self.instrument = self.strategy.instrument
 
@@ -65,11 +66,7 @@ class TradingStrategyRunner(object):
         end_time = time.time()
 
         if self.invested:
-            current_market_data = self.broker.get_current_price_data(instrument=self.instrument)
-            asking_price = normalize_current_price_data(current_market_data, target_field=PRICE_ASK)
-            sell_order = self.strategy.make_order(asking_price, order_side=SIDE_SELL)
-            order_response = self.make_market_order(SIDE_SELL, sell_order)
-            self.update_orders(order_response)
+            self.logger.info('Invested, Not Closing out position')
 
         serialized_strategy = self.strategy.serialize()
         strategy_id = self.strategy.strategy_id

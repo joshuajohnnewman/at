@@ -12,18 +12,16 @@ class RFClassifier(Classifier):
 
     num_estimators = 10
 
-    def __init__(self, config):
-        classifier_id = config['classifier_id']
-        self.features = config['features']
-
+    def __init__(self, classifier_id, features):
         if classifier_id is None:
             classifier_id = ObjectId()
             self.classifier = ensemble.RandomForestClassifier(n_estimators=self.num_estimators)
         else:
             self.classifier = self.load(classifier_id)
 
-        super(RFClassifier, self).__init__(config)
+        super(RFClassifier, self).__init__(classifier_id)
         self.classifier_id = classifier_id
+        self.features = features
 
     def predict(self, X, format_data=False, unwrap_prediction=False):
         if format_data is True:
